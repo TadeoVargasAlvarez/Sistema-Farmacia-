@@ -94,6 +94,20 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
+// Healthcheck para Railway: debe responder 200 rápido y sin redirecciones.
+// Se ubica antes de UseHttpsRedirection/Auth para evitar 30x/401.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.Equals("/health", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = StatusCodes.Status200OK;
+        await context.Response.WriteAsync("OK");
+        return;
+    }
+
+    await next();
+});
+
 // Railway y otros PaaS suelen pasar la IP y el esquema real por headers.
 // Esto evita bucles con UseHttpsRedirection cuando hay terminación TLS en el proxy.
 app.UseForwardedHeaders(new ForwardedHeadersOptions
