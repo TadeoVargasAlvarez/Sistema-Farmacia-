@@ -120,13 +120,18 @@ app.Use(async (context, next) =>
 
 // Railway y otros PaaS suelen pasar la IP y el esquema real por headers.
 // Esto evita bucles con UseHttpsRedirection cuando hay terminación TLS en el proxy.
-app.UseForwardedHeaders(new ForwardedHeadersOptions
+var forwardedOptions = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
-    // Aceptar forwarded headers en entornos detrás de proxy (Railway).
-    KnownNetworks = { },
-    KnownProxies = { }
-});
+    // Railway puede encadenar proxies; no limitamos estricto.
+    ForwardLimit = null
+};
+
+// Importante: hay que limpiar los defaults (loopback). Un initializer vacío no los borra.
+forwardedOptions.KnownNetworks.Clear();
+forwardedOptions.KnownProxies.Clear();
+
+app.UseForwardedHeaders(forwardedOptions);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
