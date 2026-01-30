@@ -2,6 +2,7 @@ using FarmaciaSalacor.Web.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +19,53 @@ if (string.IsNullOrWhiteSpace(defaultConnection))
     throw new InvalidOperationException("Falta ConnectionStrings:Default en appsettings.json");
 }
 
+static bool LooksLikeMySqlUrl(string value)
+    => value.StartsWith("mysql://", StringComparison.OrdinalIgnoreCase)
+       || value.StartsWith("mariadb://", StringComparison.OrdinalIgnoreCase);
+
+static string MySqlUrlToConnectionString(string url)
+{
+    // Formato típico Railway: mysql://user:pass@host:port/db
+    // Nota: password y user pueden venir url-encoded.
+    var uri = new Uri(url);
+
+    var userInfo = uri.UserInfo.Split(':', 2);
+    var user = userInfo.Length > 0 ? WebUtility.UrlDecode(userInfo[0]) : string.Empty;
+    var pass = userInfo.Length > 1 ? WebUtility.UrlDecode(userInfo[1]) : string.Empty;
+
+    var database = uri.AbsolutePath.Trim('/');
+    if (string.IsNullOrWhiteSpace(database))
+    {
+        throw new InvalidOperationException("MYSQL_URL inválida: falta el nombre de la base de datos en la URL.");
+    }
+
+    var port = uri.IsDefaultPort ? 3306 : uri.Port;
+
+    // Recomendación en servicios cloud: SSL requerido.
+    return $"Server={uri.Host};Port={port};Database={database};User={user};Password={pass};SslMode=Required;";
+}
+
+var isMySql = LooksLikeMySqlUrl(defaultConnection)
+    || defaultConnection.Contains("Server=", StringComparison.OrdinalIgnoreCase)
+    || defaultConnection.Contains("Host=", StringComparison.OrdinalIgnoreCase);
+
+var connectionToUse = defaultConnection;
+if (LooksLikeMySqlUrl(connectionToUse))
+{
+    connectionToUse = MySqlUrlToConnectionString(connectionToUse);
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(defaultConnection));
+{
+    if (isMySql)
+    {
+        options.UseMySql(connectionToUse, ServerVersion.AutoDetect(connectionToUse));
+    }
+    else
+    {
+        options.UseSqlite(connectionToUse);
+    }
+});
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -60,7 +106,20 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var db = services.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
+
+    // Para SQLite usamos migraciones.
+    // Para MySQL en Railway, ConnectionStrings:Default suele venir como mysql://...;
+    // las migraciones actuales fueron generadas para SQLite (tipos INTEGER/TEXT),
+    // por eso en MySQL creamos el esquema a partir del modelo.
+    if (db.Database.IsMySql())
+    {
+        await db.Database.EnsureCreatedAsync();
+    }
+    else
+    {
+        await db.Database.MigrateAsync();
+    }
+
     await DbSeeder.SeedAsync(db);
 }
 

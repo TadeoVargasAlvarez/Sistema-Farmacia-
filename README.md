@@ -33,3 +33,18 @@ $env:FARMACIA_SEED_ADMIN_PASSWORD = "UnaClaveFuerte"; dotnet run
 ## Notas de despliegue
 - Para usar con dominio, publica con `dotnet publish` y monta en IIS o Linux+Nginx.
 - En producción usa HTTPS.
+
+## MySQL (Railway)
+El proyecto puede conectarse a MySQL. En Railway normalmente obtienes una URL del tipo:
+
+- `mysql://usuario:password@host:puerto/base`
+
+En Railway puedes asignarla a tu app como variable de entorno usando el placeholder:
+
+- `ConnectionStrings__Default = ${{ MySQL.MYSQL_URL }}`
+
+En runtime la app recibe el valor real y lo convierte automáticamente.
+
+Si prefieres usar un connection string clásico, usa:
+
+`Server=HOST;Port=3306;Database=DB;User=USER;Password=PASS;SslMode=Required;`
