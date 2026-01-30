@@ -1,0 +1,54 @@
+@model List<FarmaciaSalacor.Web.Models.Cliente>
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Ventas &raquo; Clientes</div>
+    <div class="erp-page-subtitle">Maestro de clientes</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-toolbar">
+        <a class="btn btn-success btn-sm" asp-action="ClienteCreate"><i class="fa-solid fa-plus"></i> Nuevo</a>
+        <div class="ms-auto text-muted small align-self-center">Total: <strong>@Model.Count</strong></div>
+    </div>
+    <div class="erp-panel-body p-0">
+        <table class="table table-sm table-striped table-hover mb-0 erp-table">
+            <thead>
+                <tr>
+                    <th style="width:90px;">ID</th>
+                    <th>Nombre</th>
+                    <th style="width:140px;">Documento</th>
+                    <th style="width:140px;">Teléfono</th>
+                    <th style="width:90px;" class="text-center">Activo</th>
+                    <th style="width:160px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-muted small p-2">No hay clientes.</td></tr>
+                }
+                else
+                {
+                    foreach (var c in Model)
+                    {
+                        <tr>
+                            <td>@c.Id</td>
+                            <td>@c.Nombre</td>
+                            <td>@(c.Documento ?? "-")</td>
+                            <td>@(c.Telefono ?? "-")</td>
+                            <td class="text-center">@(c.Activo ? "Sí" : "No")</td>
+                            <td class="text-end">
+                                <a class="btn btn-primary btn-sm" asp-action="ClienteEdit" asp-route-id="@c.Id"><i class="fa-solid fa-pen"></i></a>
+                                <a class="btn btn-danger btn-sm" asp-action="ClienteDelete" asp-route-id="@c.Id"><i class="fa-solid fa-trash"></i></a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+

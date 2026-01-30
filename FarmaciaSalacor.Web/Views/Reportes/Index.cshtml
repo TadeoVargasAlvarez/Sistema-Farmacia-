@@ -1,0 +1,21 @@
+@{
+    ViewData["Title"] = "Reportes";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Reportes</div>
+    <div class="erp-page-subtitle">Consultas operativas</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-toolbar">
+        <a class="btn btn-primary btn-sm" asp-action="StockBajo"><i class="fa-solid fa-arrow-down"></i> Stock bajo</a>
+        <a class="btn btn-primary btn-sm" asp-action="Vencimientos"><i class="fa-solid fa-calendar-xmark"></i> Vencimientos</a>
+        <a class="btn btn-primary btn-sm" asp-action="Ventas"><i class="fa-solid fa-chart-line"></i> Ventas</a>
+        <a class="btn btn-primary btn-sm" asp-action="Compras"><i class="fa-solid fa-receipt"></i> Compras</a>
+    </div>
+    <div class="erp-panel-body">
+        <div class="text-muted small">Selecciona un reporte en el submenú o en los botones.</div>
+    </div>
+</div>
+

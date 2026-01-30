@@ -1,0 +1,56 @@
+@model FarmaciaSalacor.Web.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Ingreso al Sistema";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+
+<div class="container" style="max-width: 520px;">
+    <div class="erp-panel mt-4">
+        <div class="erp-panel-header">
+            <i class="fa-solid fa-prescription-bottle-medical"></i>
+            <span class="ms-2">Sistema de Farmacia</span>
+        </div>
+        <div class="erp-panel-body">
+            <form asp-action="Login" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                <div class="mb-2">
+                    <label asp-for="Username" class="form-label form-label-sm"></label>
+                    <input asp-for="Username" class="form-control form-control-sm" autocomplete="username" />
+                    <span asp-validation-for="Username" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-2">
+                    <label asp-for="Password" class="form-label form-label-sm"></label>
+                    <input asp-for="Password" class="form-control form-control-sm" autocomplete="current-password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input" asp-for="RememberMe" />
+                    <label class="form-check-label small" asp-for="RememberMe"></label>
+                </div>
+
+                <div class="text-danger small mb-2">
+                    @Html.ValidationSummary(excludePropertyErrors: true)
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        Entrar
+                    </button>
+                </div>
+
+                <div class="text-muted small mt-3">
+                    Usuario inicial: <strong>admin</strong> | Contraseña: <strong>123456</strong>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

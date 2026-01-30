@@ -1,0 +1,49 @@
+@model List<FarmaciaSalacor.Web.Models.Marca>
+@{
+    ViewData["Title"] = "Marcas";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Inventarios &raquo; Marcas</div>
+    <div class="erp-page-subtitle">Catálogo</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-toolbar">
+        <a class="btn btn-success btn-sm" asp-action="Create"><i class="fa-solid fa-plus"></i> Nuevo</a>
+        <div class="ms-auto text-muted small align-self-center">Total: <strong>@Model.Count</strong></div>
+    </div>
+    <div class="erp-panel-body p-0">
+        <table class="table table-sm table-striped table-hover mb-0 erp-table">
+            <thead>
+                <tr>
+                    <th style="width:90px;">ID</th>
+                    <th>Nombre</th>
+                    <th style="width:90px;" class="text-center">Activa</th>
+                    <th style="width:160px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr><td colspan="4" class="text-muted small p-2">No hay marcas.</td></tr>
+                }
+                else
+                {
+                    foreach (var m in Model)
+                    {
+                        <tr>
+                            <td>@m.Id</td>
+                            <td>@m.Nombre</td>
+                            <td class="text-center">@(m.Activa ? "Sí" : "No")</td>
+                            <td class="text-end">
+                                <a class="btn btn-primary btn-sm" asp-action="Edit" asp-route-id="@m.Id"><i class="fa-solid fa-pen"></i></a>
+                                <a class="btn btn-danger btn-sm" asp-action="Delete" asp-route-id="@m.Id"><i class="fa-solid fa-trash"></i></a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

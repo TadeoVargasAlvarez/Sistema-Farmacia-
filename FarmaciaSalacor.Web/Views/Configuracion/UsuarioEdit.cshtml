@@ -1,0 +1,53 @@
+@model FarmaciaSalacor.Web.ViewModels.UsuarioFormViewModel
+@{
+    ViewData["Title"] = "Editar usuario";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Configuración &raquo; Usuarios &raquo; Editar</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Edición</div>
+    <div class="erp-panel-body">
+        <form asp-action="UsuarioEdit" method="post" class="row g-2">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div class="col-md-4">
+                <label asp-for="Username" class="form-label form-label-sm">Usuario</label>
+                <input asp-for="Username" class="form-control form-control-sm" />
+                <span asp-validation-for="Username" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="NombreCompleto" class="form-label form-label-sm">Nombre</label>
+                <input asp-for="NombreCompleto" class="form-control form-control-sm" />
+                <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="Rol" class="form-label form-label-sm">Rol</label>
+                <select asp-for="Rol" class="form-select form-select-sm" asp-items="ViewBag.Roles"></select>
+                <span asp-validation-for="Rol" class="text-danger small"></span>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" asp-for="Activo" />
+                    <label class="form-check-label small" asp-for="Activo">Activo</label>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+            </div>
+
+            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-action="Usuarios">Cancelar</a>
+                <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

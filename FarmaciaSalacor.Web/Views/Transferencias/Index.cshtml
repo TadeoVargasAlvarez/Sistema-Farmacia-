@@ -1,0 +1,20 @@
+@{
+    ViewData["Title"] = "Transferencias";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Transferencias</div>
+    <div class="erp-page-subtitle">Movimientos entre almacenes</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-toolbar">
+        <a class="btn btn-success btn-sm" asp-action="Nueva"><i class="fa-solid fa-plus"></i> Nueva transferencia</a>
+        <a class="btn btn-primary btn-sm" asp-action="Historial"><i class="fa-solid fa-clock-rotate-left"></i> Historial</a>
+        <a class="btn btn-secondary btn-sm" asp-controller="Almacenes" asp-action="Index"><i class="fa-solid fa-warehouse"></i> Almacenes</a>
+    </div>
+    <div class="erp-panel-body">
+        <div class="text-muted small">Registra transferencias (se registran movimientos, stock global neto 0).</div>
+    </div>
+</div>
+

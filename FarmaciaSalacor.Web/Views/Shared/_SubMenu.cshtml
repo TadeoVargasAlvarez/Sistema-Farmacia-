@@ -1,0 +1,83 @@
+@{
+    var activeModule = (string?)ViewBag.ActiveModule;
+    var activeSub = (string?)ViewBag.ActiveSubModule;
+
+    string subClass(string key) => activeSub == key ? "active" : "";
+    bool isInventarios = activeModule == "Inventarios";
+    bool isVentas = activeModule == "Ventas";
+    bool isCompras = activeModule == "Compras";
+    bool isCaja = activeModule == "Caja";
+    bool isReportes = activeModule == "Reportes";
+    bool isConfiguracion = activeModule == "Configuración";
+    bool isTransferencias = activeModule == "Transferencias";
+    bool isAlmacenes = activeModule == "Almacenes";
+}
+
+@if (isInventarios)
+{
+    <ul class="nav nav-pills erp-subnav">
+        <li class="nav-item"><a class="nav-link @subClass("Productos")" asp-area="Inventarios" asp-controller="Productos" asp-action="Index"><i class="fa-solid fa-box"></i> Productos</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Categorias")" asp-area="Inventarios" asp-controller="Categorias" asp-action="Index"><i class="fa-solid fa-tags"></i> Categorías</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Marcas")" asp-area="Inventarios" asp-controller="Marcas" asp-action="Index"><i class="fa-solid fa-copyright"></i> Marcas</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Lotes")" asp-area="Inventarios" asp-controller="Lotes" asp-action="Index"><i class="fa-solid fa-layer-group"></i> Lotes</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Kardex")" asp-area="Inventarios" asp-controller="Kardex" asp-action="Index"><i class="fa-solid fa-list"></i> Kardex</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Vencimientos")" asp-area="Inventarios" asp-controller="Vencimientos" asp-action="Index"><i class="fa-solid fa-calendar-xmark"></i> Vencimientos</a></li>
+    </ul>
+}
+else if (isVentas)
+{
+    <ul class="nav nav-pills erp-subnav">
+        <li class="nav-item"><a class="nav-link @subClass("NuevaVenta")" asp-area="" asp-controller="Ventas" asp-action="Nueva"><i class="fa-solid fa-cash-register"></i> Nueva venta</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Historial")" asp-area="" asp-controller="Ventas" asp-action="Historial"><i class="fa-solid fa-clock-rotate-left"></i> Historial</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Clientes")" asp-area="" asp-controller="Ventas" asp-action="Clientes"><i class="fa-solid fa-users"></i> Clientes</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Cxc")" asp-area="" asp-controller="Ventas" asp-action="Cxc"><i class="fa-solid fa-file-invoice-dollar"></i> Cuentas por cobrar</a></li>
+    </ul>
+}
+else if (isCompras)
+{
+    <ul class="nav nav-pills erp-subnav">
+        <li class="nav-item"><a class="nav-link @subClass("Nueva")" asp-area="" asp-controller="Compras" asp-action="Nueva"><i class="fa-solid fa-plus"></i> Nueva compra</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Historial")" asp-area="" asp-controller="Compras" asp-action="Historial"><i class="fa-solid fa-clock-rotate-left"></i> Historial</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Proveedores")" asp-area="" asp-controller="Compras" asp-action="Proveedores"><i class="fa-solid fa-truck-field"></i> Proveedores</a></li>
+    </ul>
+}
+else if (isTransferencias)
+{
+    <ul class="nav nav-pills erp-subnav">
+        <li class="nav-item"><a class="nav-link @subClass("Nueva")" asp-area="" asp-controller="Transferencias" asp-action="Nueva"><i class="fa-solid fa-right-left"></i> Nueva</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Historial")" asp-area="" asp-controller="Transferencias" asp-action="Historial"><i class="fa-solid fa-clock-rotate-left"></i> Historial</a></li>
+    </ul>
+}
+else if (isAlmacenes)
+{
+    <ul class="nav nav-pills erp-subnav">
+        <li class="nav-item"><a class="nav-link @subClass("Catalogo")" asp-area="" asp-controller="Almacenes" asp-action="Index"><i class="fa-solid fa-warehouse"></i> Catálogo</a></li>
+    </ul>
+}
+else if (isCaja)
+{
+    <ul class="nav nav-pills erp-subnav">
+        <li class="nav-item"><a class="nav-link @subClass("Resumen")" asp-area="" asp-controller="Caja" asp-action="Index"><i class="fa-solid fa-cash-register"></i> Resumen</a></li>
+    </ul>
+}
+else if (isReportes)
+{
+    <ul class="nav nav-pills erp-subnav">
+        <li class="nav-item"><a class="nav-link @subClass("StockBajo")" asp-area="" asp-controller="Reportes" asp-action="StockBajo"><i class="fa-solid fa-arrow-down"></i> Stock bajo</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Vencimientos")" asp-area="" asp-controller="Reportes" asp-action="Vencimientos"><i class="fa-solid fa-calendar-xmark"></i> Vencimientos</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Ventas")" asp-area="" asp-controller="Reportes" asp-action="Ventas"><i class="fa-solid fa-chart-line"></i> Ventas</a></li>
+        <li class="nav-item"><a class="nav-link @subClass("Compras")" asp-area="" asp-controller="Reportes" asp-action="Compras"><i class="fa-solid fa-receipt"></i> Compras</a></li>
+    </ul>
+}
+else if (isConfiguracion)
+{
+    <ul class="nav nav-pills erp-subnav">
+        <li class="nav-item"><a class="nav-link @subClass("Usuarios")" asp-area="" asp-controller="Configuracion" asp-action="Usuarios"><i class="fa-solid fa-users-gear"></i> Usuarios</a></li>
+    </ul>
+}
+else
+{
+    <div class="erp-subnav-placeholder small text-muted">
+        &nbsp;
+    </div>
+}

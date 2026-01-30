@@ -1,0 +1,110 @@
+@model List<FarmaciaSalacor.Web.Models.Producto>
+@{
+    ViewData["Title"] = "Productos";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Inventarios &raquo; Productos</div>
+    <div class="erp-page-subtitle">Catálogo de productos</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-toolbar">
+        <a class="btn btn-success btn-sm" asp-action="Create">
+            <i class="fa-solid fa-plus"></i> Nuevo
+        </a>
+        <a id="btnEditar" class="btn btn-primary btn-sm disabled" href="#" aria-disabled="true">
+            <i class="fa-solid fa-pen"></i> Editar
+        </a>
+        <a id="btnEliminar" class="btn btn-danger btn-sm disabled" href="#" aria-disabled="true">
+            <i class="fa-solid fa-trash"></i> Eliminar
+        </a>
+        <div class="ms-auto text-muted small align-self-center">
+            Total: <strong>@Model.Count</strong>
+        </div>
+    </div>
+
+    <div class="erp-panel-body p-0">
+        <table class="table table-sm table-striped table-hover mb-0 erp-table">
+            <thead>
+                <tr>
+                    <th style="width:36px;"></th>
+                    <th style="width:120px;">Código</th>
+                    <th>Producto</th>
+                    <th style="width:160px;">Categoría</th>
+                    <th style="width:160px;">Marca</th>
+                    <th style="width:90px;" class="text-end">Stock</th>
+                    <th style="width:110px;" class="text-end">Precio</th>
+                    <th style="width:120px;">Vencimiento</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="text-muted small p-2">No hay productos registrados.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var p in Model)
+                    {
+                        <tr class="erp-row-select" data-id="@p.Id">
+                            <td class="text-center">
+                                <input class="form-check-input" type="radio" name="selProducto" value="@p.Id" />
+                            </td>
+                            <td>@p.Codigo</td>
+                            <td>@p.Nombre</td>
+                            <td>@(p.Categoria?.Nombre ?? "-")</td>
+                            <td>@(p.Marca?.Nombre ?? "-")</td>
+                            <td class="text-end">@p.Stock.ToString("N2")</td>
+                            <td class="text-end">@p.Precio.ToString("N2")</td>
+                            <td>@(p.Vencimiento?.ToString("yyyy-MM-dd") ?? "-")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const btnEditar = document.getElementById('btnEditar');
+            const btnEliminar = document.getElementById('btnEliminar');
+
+            function setSelected(id) {
+                if (!id) {
+                    btnEditar.classList.add('disabled');
+                    btnEliminar.classList.add('disabled');
+                    btnEditar.setAttribute('href', '#');
+                    btnEliminar.setAttribute('href', '#');
+                    return;
+                }
+
+                btnEditar.classList.remove('disabled');
+                btnEliminar.classList.remove('disabled');
+                btnEditar.setAttribute('href', '@Url.Action("Edit")/' + id);
+                btnEliminar.setAttribute('href', '@Url.Action("Delete")/' + id);
+            }
+
+            document.querySelectorAll('input[name="selProducto"]').forEach(r => {
+                r.addEventListener('change', function () {
+                    setSelected(this.value);
+                });
+            });
+
+            document.querySelectorAll('tr.erp-row-select').forEach(tr => {
+                tr.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    const radio = this.querySelector('input[name="selProducto"]');
+                    if (radio) {
+                        radio.checked = true;
+                        setSelected(id);
+                    }
+                });
+            });
+        })();
+    </script>
+}

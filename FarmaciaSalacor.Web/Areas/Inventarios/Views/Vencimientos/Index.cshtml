@@ -1,0 +1,75 @@
+@model FarmaciaSalacor.Web.Areas.Inventarios.Controllers.VencimientosIndexVm
+@{
+    ViewData["Title"] = "Vencimientos";
+    var vencidos = Model.Items.Count(x => x.Vencimiento != null && x.Vencimiento.Value < Model.Hoy);
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Inventarios &raquo; Vencimientos</div>
+    <div class="erp-page-subtitle">Lotes vencidos o por vencer (hasta @Model.Dias días)</div>
+</div>
+
+<div class="erp-panel mb-2">
+    <div class="erp-panel-header">Filtros</div>
+    <div class="erp-panel-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-6">
+                <label class="form-label form-label-sm">Producto</label>
+                <select class="form-select form-select-sm" name="productoId" asp-items="ViewBag.Productos">
+                    <option value="">-- Todos --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">Días</label>
+                <input class="form-control form-control-sm" type="number" min="0" max="365" name="dias" value="@Model.Dias" />
+            </div>
+            <div class="col-md-4 d-flex align-items-end justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-action="Index">Limpiar</a>
+                <button class="btn btn-primary btn-sm" type="submit">Aplicar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-toolbar">
+        <div class="text-muted small align-self-center">
+            Total mostrado: <strong>@Model.Items.Count</strong> | Vencidos: <strong>@vencidos</strong>
+        </div>
+    </div>
+    <div class="erp-panel-body p-0">
+        <table class="table table-sm table-striped table-hover mb-0 erp-table">
+            <thead>
+                <tr>
+                    <th style="width:90px;">ID</th>
+                    <th>Producto</th>
+                    <th style="width:180px;">Nº Lote</th>
+                    <th style="width:140px;">Vencimiento</th>
+                    <th style="width:120px;" class="text-end">Stock</th>
+                    <th style="width:110px;" class="text-center">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-muted small p-2">No hay lotes por vencer en el rango.</td></tr>
+                }
+                else
+                {
+                    foreach (var l in Model.Items)
+                    {
+                        var estado = (l.Vencimiento != null && l.Vencimiento.Value < Model.Hoy) ? "Vencido" : "Por vencer";
+                        <tr>
+                            <td>@l.Id</td>
+                            <td>@(l.Producto?.Nombre ?? "-")</td>
+                            <td>@l.NumeroLote</td>
+                            <td>@(l.Vencimiento?.ToString("yyyy-MM-dd") ?? "-")</td>
+                            <td class="text-end">@l.Stock.ToString("N2")</td>
+                            <td class="text-center">@estado</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

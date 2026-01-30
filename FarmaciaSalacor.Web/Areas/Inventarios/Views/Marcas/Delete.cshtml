@@ -1,0 +1,26 @@
+@model FarmaciaSalacor.Web.Models.Marca
+@{
+    ViewData["Title"] = "Eliminar marca";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Inventarios &raquo; Marcas &raquo; Eliminar</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Confirmación</div>
+    <div class="erp-panel-body">
+        <div class="alert alert-warning p-2 mb-2">¿Seguro que deseas eliminar esta marca?</div>
+        <table class="table table-sm mb-2">
+            <tr><th style="width:160px;">ID</th><td>@Model.Id</td></tr>
+            <tr><th>Nombre</th><td>@Model.Nombre</td></tr>
+        </table>
+
+        <form asp-action="DeleteConfirmed" method="post" class="d-flex justify-content-end gap-2">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <a class="btn btn-secondary btn-sm" asp-action="Index">Cancelar</a>
+            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+        </form>
+    </div>
+</div>

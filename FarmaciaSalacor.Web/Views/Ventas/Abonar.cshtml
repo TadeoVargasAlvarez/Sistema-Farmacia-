@@ -1,0 +1,44 @@
+@model FarmaciaSalacor.Web.Models.Venta
+@{
+    ViewData["Title"] = "Abonar";
+    var saldo = Model.Total - Model.Pagado;
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Ventas &raquo; CXC &raquo; Abonar</div>
+    <div class="erp-page-subtitle">@((Model.NumeroDocumento ?? $"Venta #{Model.Id}"))</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Pago</div>
+    <div class="erp-panel-body">
+        <div class="row g-2 mb-2">
+            <div class="col-md-6"><strong>Cliente:</strong> @(Model.Cliente?.Nombre ?? "-")</div>
+            <div class="col-md-2"><strong>Total:</strong> @Model.Total.ToString("N2")</div>
+            <div class="col-md-2"><strong>Pagado:</strong> @Model.Pagado.ToString("N2")</div>
+            <div class="col-md-2"><strong>Saldo:</strong> @saldo.ToString("N2")</div>
+        </div>
+
+        <form asp-action="Abonar" method="post" class="row g-2">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">Monto</label>
+                <input class="form-control form-control-sm" name="monto" />
+            </div>
+            <div class="col-md-7">
+                <label class="form-label form-label-sm">Observación</label>
+                <input class="form-control form-control-sm" name="observacion" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-action="Cxc">Cancelar</a>
+                <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+            </div>
+
+            <div class="col-12">
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+            </div>
+        </form>
+    </div>
+</div>

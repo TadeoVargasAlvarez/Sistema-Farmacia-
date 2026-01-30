@@ -1,0 +1,524 @@
+@model FarmaciaSalacor.Web.Models.Producto
+@{
+    ViewData["Title"] = "Nuevo producto";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Inventarios &raquo; Productos &raquo; Nuevo</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Registro de producto</div>
+    <div class="erp-panel-body">
+        <form asp-action="Create" method="post" class="row g-2">
+            @Html.AntiForgeryToken()
+
+            <div class="col-md-3">
+                <label asp-for="Codigo" class="form-label form-label-sm"></label>
+                <div class="input-group input-group-sm">
+                    <input asp-for="Codigo" class="form-control form-control-sm" autocomplete="off" />
+                    <button type="button" class="btn btn-outline-secondary" id="btnScanBarcode" title="Leer código de barras con la cámara">
+                        <i class="fa-solid fa-camera"></i>
+                    </button>
+                </div>
+                <span asp-validation-for="Codigo" class="text-danger small"></span>
+
+                <div id="barcodeScanner" class="mt-2" style="display:none;">
+                    <div class="border rounded p-2 bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="small fw-semibold">Escáner de código de barras</div>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnStopScan">Detener</button>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <label class="small text-muted mb-0" for="barcodeCameraSelect" style="min-width:60px;">Cámara</label>
+                            <select id="barcodeCameraSelect" class="form-select form-select-sm">
+                                <option value="">(Predeterminada)</option>
+                            </select>
+                        </div>
+                        <div class="position-relative" style="width:100%;max-height:180px;">
+                            <video id="barcodeVideo" playsinline style="width:100%;max-height:180px;background:#000;" autoplay muted></video>
+                            <canvas id="barcodeOverlay" class="position-absolute top-0 start-0" style="width:100%;height:100%;pointer-events:none;"></canvas>
+                        </div>
+                        <div id="barcodeMsg" class="text-muted small mt-2">Apunte la cámara al código…</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Nombre" class="form-label form-label-sm"></label>
+                <input asp-for="Nombre" class="form-control form-control-sm" />
+                <span asp-validation-for="Nombre" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Precio" class="form-label form-label-sm"></label>
+                <input asp-for="Precio" class="form-control form-control-sm" />
+                <span asp-validation-for="Precio" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <label class="form-label form-label-sm mb-0">Categoría</label>
+                    <a class="small" asp-area="Inventarios" asp-controller="Categorias" asp-action="Create">Nueva</a>
+                </div>
+                <select asp-for="CategoriaId" class="form-select form-select-sm" asp-items="ViewBag.Categorias">
+                    <option value="">(Sin categoría)</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">Marca</label>
+                <select asp-for="MarcaId" class="form-select form-select-sm" asp-items="ViewBag.Marcas">
+                    <option value="">(Sin marca)</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Stock" class="form-label form-label-sm"></label>
+                <input asp-for="Stock" class="form-control form-control-sm" />
+                <span asp-validation-for="Stock" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Vencimiento" class="form-label form-label-sm"></label>
+                <input asp-for="Vencimiento" class="form-control form-control-sm" type="date" />
+                <span asp-validation-for="Vencimiento" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-action="Index">Cancelar</a>
+                <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script src="https://cdn.jsdelivr.net/npm/@@zxing/library@@0.20.0/umd/index.min.js"></script>
+
+    <script>
+        (function () {
+            const btn = document.getElementById('btnScanBarcode');
+            const stopBtn = document.getElementById('btnStopScan');
+            const panel = document.getElementById('barcodeScanner');
+            const video = document.getElementById('barcodeVideo');
+            const overlay = document.getElementById('barcodeOverlay');
+            const cameraSelect = document.getElementById('barcodeCameraSelect');
+            const msg = document.getElementById('barcodeMsg');
+            const codigoInput = document.getElementById('Codigo');
+
+            if (!btn || !stopBtn || !panel || !video || !overlay || !cameraSelect || !msg || !codigoInput) return;
+
+            let stream = null;
+            let detector = null;
+            let rafId = null;
+            let zxingReader = null;
+            let zxingDeviceId = null;
+            let scanning = false;
+            let stopTimerId = null;
+
+            const storageKey = 'farmacia.camera.deviceId';
+
+            const ctx = overlay.getContext('2d');
+
+            function resizeOverlay() {
+                // Ajustar el canvas al tamaño real renderizado del video
+                const rect = video.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                overlay.width = Math.max(1, Math.floor(rect.width * dpr));
+                overlay.height = Math.max(1, Math.floor(rect.height * dpr));
+                if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+
+            function clearOverlay() {
+                if (!ctx) return;
+                const w = overlay.width;
+                const h = overlay.height;
+                ctx.clearRect(0, 0, w, h);
+            }
+
+            function drawGuide() {
+                if (!ctx) return;
+
+                // Guía fija (marco) para apuntar el código
+                const rect = video.getBoundingClientRect();
+                const w = rect.width;
+                const h = rect.height;
+
+                const gw = Math.max(120, w * 0.80);
+                const gh = Math.max(60, h * 0.45);
+                const gx = (w - gw) / 2;
+                const gy = (h - gh) / 2;
+
+                ctx.save();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgba(13, 110, 253, 0.55)';
+                ctx.setLineDash([6, 6]);
+                ctx.strokeRect(gx, gy, gw, gh);
+                ctx.restore();
+            }
+
+            function mapPointToCanvas(x, y) {
+                // Intentar mapear coords de detección (videoWidth/videoHeight) al canvas visible.
+                const vw = video.videoWidth || 0;
+                const vh = video.videoHeight || 0;
+                const rect = video.getBoundingClientRect();
+                const cw = rect.width || 1;
+                const ch = rect.height || 1;
+
+                if (vw > 0 && vh > 0) {
+                    return {
+                        x: (x / vw) * cw,
+                        y: (y / vh) * ch
+                    };
+                }
+
+                return { x, y };
+            }
+
+            function drawPolygon(points) {
+                if (!ctx || !points || points.length < 2) return;
+
+                ctx.save();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = 'rgba(13, 110, 253, 0.95)';
+                ctx.fillStyle = 'rgba(13, 110, 253, 0.12)';
+                ctx.setLineDash([]);
+
+                ctx.beginPath();
+                const p0 = mapPointToCanvas(points[0].x, points[0].y);
+                ctx.moveTo(p0.x, p0.y);
+                for (let i = 1; i < points.length; i++) {
+                    const p = mapPointToCanvas(points[i].x, points[i].y);
+                    ctx.lineTo(p.x, p.y);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawBoxFromRect(bb) {
+                if (!ctx || !bb) return;
+                const rect = video.getBoundingClientRect();
+                const w = rect.width || 1;
+                const h = rect.height || 1;
+                const vw = video.videoWidth || 0;
+                const vh = video.videoHeight || 0;
+
+                let x = bb.x ?? bb.left ?? 0;
+                let y = bb.y ?? bb.top ?? 0;
+                let bw = bb.width ?? ((bb.right ?? 0) - (bb.left ?? 0));
+                let bh = bb.height ?? ((bb.bottom ?? 0) - (bb.top ?? 0));
+
+                if (vw > 0 && vh > 0) {
+                    x = (x / vw) * w;
+                    y = (y / vh) * h;
+                    bw = (bw / vw) * w;
+                    bh = (bh / vh) * h;
+                }
+
+                ctx.save();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = 'rgba(13, 110, 253, 0.95)';
+                ctx.fillStyle = 'rgba(13, 110, 253, 0.12)';
+                ctx.setLineDash([]);
+                ctx.fillRect(x, y, bw, bh);
+                ctx.strokeRect(x, y, bw, bh);
+                ctx.restore();
+            }
+
+            function scheduleStop(delayMs) {
+                if (stopTimerId) {
+                    clearTimeout(stopTimerId);
+                    stopTimerId = null;
+                }
+
+                stopTimerId = window.setTimeout(() => {
+                    stopTimerId = null;
+                    stop();
+                }, delayMs);
+            }
+
+            function getSelectedDeviceId() {
+                const v = (cameraSelect.value || '').trim();
+                return v || null;
+            }
+
+            async function refreshCameraList() {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const cams = devices.filter(d => d.kind === 'videoinput');
+                    const remembered = localStorage.getItem(storageKey) || '';
+                    const current = cameraSelect.value || '';
+
+                    cameraSelect.innerHTML = '';
+                    const def = document.createElement('option');
+                    def.value = '';
+                    def.textContent = '(Predeterminada)';
+                    cameraSelect.appendChild(def);
+
+                    cams.forEach((c, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = c.deviceId;
+                        opt.textContent = c.label || ('Cámara ' + (idx + 1));
+                        cameraSelect.appendChild(opt);
+                    });
+
+                    if (remembered && cams.some(c => c.deviceId === remembered)) {
+                        cameraSelect.value = remembered;
+                    } else if (current && cams.some(c => c.deviceId === current)) {
+                        cameraSelect.value = current;
+                    }
+                } catch {
+                    // ignore
+                }
+            }
+
+            function setMsg(text) {
+                msg.textContent = text;
+            }
+
+            function getActiveTrackLabel() {
+                try {
+                    const s = video.srcObject;
+                    if (!s || !s.getVideoTracks) return null;
+                    const t = s.getVideoTracks()[0];
+                    return (t && t.label) ? t.label : null;
+                } catch {
+                    return null;
+                }
+            }
+
+            async function start() {
+                if (scanning) return;
+                scanning = true;
+
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    setMsg('Este navegador no permite usar la cámara.');
+                    panel.style.display = '';
+                    scanning = false;
+                    return;
+                }
+
+                // Preferir BarcodeDetector si existe (rápido y nativo). Si no, usar ZXing (fallback).
+                const hasBarcodeDetector = ('BarcodeDetector' in window);
+                const hasZXing = (typeof window.ZXing !== 'undefined');
+
+                if (!hasBarcodeDetector && !hasZXing) {
+                    setMsg('No se pudo inicializar el lector de códigos. Prueba con Chrome/Edge actualizado.');
+                    panel.style.display = '';
+                    scanning = false;
+                    return;
+                }
+
+                try {
+                    // Actualiza lista (labels suelen aparecer después de conceder permiso)
+                    await refreshCameraList();
+
+                    if (hasBarcodeDetector) {
+                        // BarcodeDetector: abrimos cámara nosotros y hacemos detect() en loop.
+                        const selectedId = getSelectedDeviceId();
+                        const constraints = {
+                            video: {
+                                ...(selectedId ? { deviceId: { exact: selectedId } } : { facingMode: { ideal: 'environment' } }),
+                                width: { ideal: 1280 },
+                                height: { ideal: 720 }
+                            },
+                            audio: false
+                        };
+                        stream = await navigator.mediaDevices.getUserMedia(constraints);
+                        video.srcObject = stream;
+                        panel.style.display = '';
+                        setMsg('Apunte la cámara al código…');
+
+                        // Mostrar qué cámara quedó activa
+                        const lbl = stream.getVideoTracks && stream.getVideoTracks()[0] ? stream.getVideoTracks()[0].label : null;
+                        if (lbl) setMsg('Usando: ' + lbl + ' — Apunte la cámara al código…');
+
+                        try {
+                            detector = new BarcodeDetector({
+                                formats: ['ean_13', 'ean_8', 'code_128', 'upc_a', 'upc_e', 'itf']
+                            });
+                        } catch {
+                            detector = new BarcodeDetector();
+                        }
+
+                        const tick = async () => {
+                            try {
+                                const barcodes = await detector.detect(video);
+                                clearOverlay();
+                                drawGuide();
+                                if (barcodes && barcodes.length > 0) {
+                                    const b = barcodes[0];
+                                    if (b.cornerPoints && b.cornerPoints.length >= 4) {
+                                        const pts = b.cornerPoints.map(p => ({ x: p.x, y: p.y }));
+                                        drawPolygon(pts);
+                                    } else if (b.boundingBox) {
+                                        drawBoxFromRect(b.boundingBox);
+                                    }
+
+                                    const raw = barcodes[0].rawValue || '';
+                                    if (raw) {
+                                        codigoInput.value = raw;
+                                        codigoInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                        setMsg('Código leído: ' + raw);
+                                        // Dejar visible el recuadro un instante
+                                        scheduleStop(800);
+                                        return;
+                                    }
+                                }
+                            } catch {
+                                // Ignorar fallos momentáneos de detección
+                            }
+                            rafId = window.requestAnimationFrame(tick);
+                        };
+
+                        rafId = window.requestAnimationFrame(tick);
+                        return;
+                    }
+
+                    // Fallback: ZXing (deja que ZXing controle la cámara)
+                    panel.style.display = '';
+                    setMsg('Apunte la cámara al código…');
+
+                    clearOverlay();
+                    drawGuide();
+
+                    zxingReader = new window.ZXing.BrowserMultiFormatReader();
+
+                    // decodeFromVideoDevice se encarga de la captura y decodificación en loop.
+                    // Si el usuario seleccionó una webcam USB, usamos su deviceId tal cual.
+                    const selectedId = getSelectedDeviceId();
+                    zxingDeviceId = selectedId;
+                    const deviceIdToUse = selectedId || null;
+
+                    zxingReader.decodeFromVideoDevice(deviceIdToUse, 'barcodeVideo', async (result, err) => {
+                        if (result) {
+                            // Dibujar recuadro usando resultPoints
+                            try {
+                                const pointsRaw = result.resultPoints || (result.getResultPoints && result.getResultPoints()) || [];
+                                const pts = (pointsRaw || []).map(p => {
+                                    const x = (typeof p.getX === 'function') ? p.getX() : (p.x ?? 0);
+                                    const y = (typeof p.getY === 'function') ? p.getY() : (p.y ?? 0);
+                                    return { x, y };
+                                });
+
+                                clearOverlay();
+                                drawGuide();
+                                if (pts.length >= 4) {
+                                    drawPolygon(pts);
+                                } else if (pts.length >= 2) {
+                                    // Si trae pocos puntos, construimos un rectángulo aproximado
+                                    const xs = pts.map(p => p.x);
+                                    const ys = pts.map(p => p.y);
+                                    const minX = Math.min.apply(null, xs);
+                                    const maxX = Math.max.apply(null, xs);
+                                    const minY = Math.min.apply(null, ys);
+                                    const maxY = Math.max.apply(null, ys);
+                                    drawBoxFromRect({ x: minX, y: minY, width: (maxX - minX), height: (maxY - minY) });
+                                }
+                            } catch {
+                                // No bloquear por dibujo
+                            }
+
+                            const raw = result.getText ? result.getText() : (result.text || '');
+                            if (raw) {
+                                codigoInput.value = raw;
+                                codigoInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                setMsg('Código leído: ' + raw);
+                                scheduleStop(800);
+                            }
+                        }
+                        // err es normal cuando aún no detecta (NotFoundException)
+                    });
+
+                    // Mostrar qué cámara quedó activa (cuando ZXing inicialice el stream)
+                    window.setTimeout(() => {
+                        const lbl = getActiveTrackLabel();
+                        if (lbl) setMsg('Usando: ' + lbl + ' — Apunte la cámara al código…');
+                    }, 600);
+                } catch (e) {
+                    setMsg('No se pudo acceder a la cámara. Permite el permiso y vuelve a intentar.');
+                    panel.style.display = '';
+                    scanning = false;
+                }
+            }
+
+            async function stop() {
+                if (stopTimerId) {
+                    clearTimeout(stopTimerId);
+                    stopTimerId = null;
+                }
+
+                if (rafId) {
+                    window.cancelAnimationFrame(rafId);
+                    rafId = null;
+                }
+
+                if (zxingReader) {
+                    try { zxingReader.reset(); } catch { }
+                    zxingReader = null;
+                    zxingDeviceId = null;
+                }
+
+                if (video) {
+                    try { video.pause(); } catch { }
+                    video.srcObject = null;
+                }
+
+                if (stream) {
+                    for (const t of stream.getTracks()) t.stop();
+                    stream = null;
+                }
+
+                panel.style.display = 'none';
+                scanning = false;
+                clearOverlay();
+            }
+
+            btn.addEventListener('click', () => {
+                if (!scanning) start();
+                else stop();
+            });
+
+            stopBtn.addEventListener('click', () => stop());
+
+            cameraSelect.addEventListener('change', async () => {
+                try {
+                    localStorage.setItem(storageKey, cameraSelect.value || '');
+                } catch { }
+
+                if (scanning) {
+                    await stop();
+                    await start();
+                }
+            });
+
+            video.addEventListener('loadedmetadata', () => {
+                resizeOverlay();
+                clearOverlay();
+                drawGuide();
+            });
+
+            window.addEventListener('resize', () => {
+                if (!scanning) return;
+                resizeOverlay();
+                clearOverlay();
+                drawGuide();
+            });
+
+            window.addEventListener('beforeunload', () => {
+                try { stop(); } catch { }
+            });
+
+            // Pre-carga lista (puede venir sin labels hasta dar permiso)
+            refreshCameraList();
+        })();
+    </script>
+}

@@ -1,0 +1,700 @@
+@model FarmaciaSalacor.Web.ViewModels.VentaNuevaViewModel
+@{
+    ViewData["Title"] = "Nueva venta";
+    var productos = (IEnumerable<FarmaciaSalacor.Web.ViewModels.ProductoLookupViewModel>)(ViewBag.Productos
+        ?? Array.Empty<FarmaciaSalacor.Web.ViewModels.ProductoLookupViewModel>());
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Ventas &raquo; Nueva venta</div>
+    <div class="erp-page-subtitle">Registro de venta</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Venta</div>
+    <div class="erp-panel-body">
+        <form asp-action="Nueva" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <label class="form-label form-label-sm">Documento</label>
+                    <input class="form-control form-control-sm" asp-for="NumeroDocumento" placeholder="(auto)" />
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label form-label-sm">Cliente (opcional)</label>
+                    <select class="form-select form-select-sm" asp-for="ClienteId" asp-items="ViewBag.Clientes">
+                        <option value="">-- Consumidor final --</option>
+                    </select>
+                    <span asp-validation-for="ClienteId" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="form-check">
+                        <input class="form-check-input" asp-for="EsCredito" />
+                        <label class="form-check-label small" asp-for="EsCredito">A crédito</label>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label form-label-sm">Abono inicial</label>
+                    <input class="form-control form-control-sm" asp-for="AbonoInicial" />
+                </div>
+            </div>
+
+            <div class="mt-2">
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+            </div>
+
+            <div class="erp-panel mt-2">
+                <div class="erp-toolbar">
+                    <button id="btnAddItem" type="button" class="btn btn-success btn-sm"><i class="fa-solid fa-plus"></i> Agregar</button>
+                    <button id="btnScanVentaBarcode" type="button" class="btn btn-outline-secondary btn-sm" title="Escanear código de barras">
+                        <i class="fa-solid fa-camera"></i> Escanear
+                    </button>
+                    <div class="ms-auto text-muted small align-self-center">Total: <strong id="lblTotal">0.00</strong></div>
+                </div>
+                <div id="ventaBarcodeScanner" class="px-2 pb-2" style="display:none;">
+                    <div class="border rounded p-2 bg-light mt-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="small fw-semibold">Escáner de código de barras</div>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnStopVentaScan">Detener</button>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <label class="small text-muted mb-0" for="ventaBarcodeCameraSelect" style="min-width:60px;">Cámara</label>
+                            <select id="ventaBarcodeCameraSelect" class="form-select form-select-sm">
+                                <option value="">(Predeterminada)</option>
+                            </select>
+                        </div>
+                        <div class="position-relative" style="width:100%;max-height:200px;">
+                            <video id="ventaBarcodeVideo" playsinline style="width:100%;max-height:200px;background:#000;" autoplay muted></video>
+                            <canvas id="ventaBarcodeOverlay" class="position-absolute top-0 start-0" style="width:100%;height:100%;pointer-events:none;"></canvas>
+                        </div>
+                        <div id="ventaBarcodeMsg" class="text-muted small mt-2">Apunte la cámara al código…</div>
+                    </div>
+                </div>
+                <div class="erp-panel-body p-0">
+                    <table class="table table-sm table-striped table-hover mb-0 erp-table" id="tblItems">
+                        <thead>
+                            <tr>
+                                <th style="width:44px;"></th>
+                                <th>Producto</th>
+                                <th style="width:120px;">Código</th>
+                                <th style="width:110px;" class="text-end">Stock</th>
+                                <th style="width:110px;" class="text-end">Cantidad</th>
+                                <th style="width:140px;" class="text-end">Precio</th>
+                                <th style="width:140px;" class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Items.Count; i++)
+                            {
+                                <tr class="venta-row" data-idx="@i">
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-danger btn-sm btn-del" title="Quitar"><i class="fa-solid fa-trash"></i></button>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm inp-prod-search mb-1" placeholder="Buscar producto o código…" autocomplete="off" />
+                                        <select class="form-select form-select-sm sel-prod" name="Items[@i].ProductoId">
+                                            <option value="">-- Seleccionar --</option>
+                                            @foreach (var p in productos)
+                                            {
+                                                <option value="@p.Id" data-codigo="@p.Codigo" data-precio="@p.Precio" data-stock="@p.Stock">@p.Nombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td class="td-codigo">-</td>
+                                    <td class="td-stock text-end">-</td>
+                                    <td>
+                                        <input class="form-control form-control-sm text-end inp-cant" name="Items[@i].Cantidad" value="@Model.Items[i].Cantidad" />
+                                    </td>
+                                    <td>
+                                        <input class="form-control form-control-sm text-end inp-precio" name="Items[@i].PrecioUnitario" value="@Model.Items[i].PrecioUnitario" />
+                                    </td>
+                                    <td class="td-subtotal text-end">0.00</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-2">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-floppy-disk"></i> Guardar venta</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/@@zxing/library@@0.20.0/umd/index.min.js"></script>
+    <script>
+        (function () {
+            const tbl = document.getElementById('tblItems');
+            const body = tbl.querySelector('tbody');
+            const btnAdd = document.getElementById('btnAddItem');
+            const lblTotal = document.getElementById('lblTotal');
+
+            // Catálogo de productos (para buscador + escáner), basado en el primer select.
+            const productosCatalog = (function buildCatalog() {
+                const firstSel = document.querySelector('select.sel-prod');
+                if (!firstSel) return [];
+                const opts = Array.from(firstSel.querySelectorAll('option')).slice(1);
+                return opts
+                    .map(o => {
+                        const id = (o.value || '').trim();
+                        if (!id) return null;
+                        return {
+                            id,
+                            nombre: (o.textContent || '').trim(),
+                            codigo: (o.getAttribute('data-codigo') || '').trim(),
+                            precio: (o.getAttribute('data-precio') || '').trim(),
+                            stock: (o.getAttribute('data-stock') || '').trim()
+                        };
+                    })
+                    .filter(x => x && x.id);
+            })();
+
+            function escapeHtmlText(s) {
+                const str = ('' + (s ?? ''));
+                return str
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#39;');
+            }
+
+            function escapeHtmlAttr(s) {
+                return escapeHtmlText(s);
+            }
+
+            function normalizeSearch(s) {
+                return ('' + (s ?? '')).trim().toLowerCase();
+            }
+
+            function renderProductoOptions(selectEl, query) {
+                if (!selectEl) return;
+
+                const q = normalizeSearch(query);
+                const currentValue = (selectEl.value || '').trim();
+
+                let list = productosCatalog;
+                if (q) {
+                    list = productosCatalog.filter(p => {
+                        const n = normalizeSearch(p.nombre);
+                        const c = normalizeSearch(p.codigo);
+                        return (n && n.includes(q)) || (c && c.includes(q));
+                    });
+                }
+
+                // Mantener el seleccionado aunque no haga match con el filtro
+                if (currentValue && !list.some(p => p.id === currentValue)) {
+                    const selected = productosCatalog.find(p => p.id === currentValue);
+                    if (selected) list = [selected, ...list];
+                }
+
+                const html = [
+                    '<option value="">-- Seleccionar --</option>',
+                    ...list.map(p => `<option value="${p.id}" data-codigo="${escapeHtmlAttr(p.codigo)}" data-precio="${p.precio}" data-stock="${p.stock}">${escapeHtmlText(p.nombre)}</option>`)
+                ].join('');
+
+                selectEl.innerHTML = html;
+                if (currentValue) selectEl.value = currentValue;
+            }
+
+            // Scanner elements
+            const scanBtn = document.getElementById('btnScanVentaBarcode');
+            const scanPanel = document.getElementById('ventaBarcodeScanner');
+            const scanStopBtn = document.getElementById('btnStopVentaScan');
+            const scanVideo = document.getElementById('ventaBarcodeVideo');
+            const scanOverlay = document.getElementById('ventaBarcodeOverlay');
+            const scanMsg = document.getElementById('ventaBarcodeMsg');
+            const scanCameraSelect = document.getElementById('ventaBarcodeCameraSelect');
+
+            const overlayCtx = scanOverlay ? scanOverlay.getContext('2d') : null;
+
+            let scanStream = null;
+            let scanDetector = null;
+            let scanRafId = null;
+            let scanZXingReader = null;
+            let scanStopTimerId = null;
+            let scanRunning = false;
+            let lastCode = null;
+            let lastCodeAt = 0;
+
+            const cameraStorageKey = 'farmacia.venta.camera.deviceId';
+
+            function toNumber(v) {
+                if (v === null || v === undefined) return 0;
+                const s = ('' + v).replace(',', '.');
+                const n = parseFloat(s);
+                return isNaN(n) ? 0 : n;
+            }
+
+            function setScanMsg(text) {
+                if (!scanMsg) return;
+                scanMsg.textContent = text;
+            }
+
+            function getSelectedCameraId() {
+                if (!scanCameraSelect) return null;
+                const v = (scanCameraSelect.value || '').trim();
+                return v || null;
+            }
+
+            async function refreshCameraList() {
+                if (!scanCameraSelect || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const cams = devices.filter(d => d.kind === 'videoinput');
+
+                    const remembered = localStorage.getItem(cameraStorageKey) || '';
+                    const current = scanCameraSelect.value || '';
+
+                    scanCameraSelect.innerHTML = '';
+                    const def = document.createElement('option');
+                    def.value = '';
+                    def.textContent = '(Predeterminada)';
+                    scanCameraSelect.appendChild(def);
+
+                    cams.forEach((c, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = c.deviceId;
+                        opt.textContent = c.label || ('Cámara ' + (idx + 1));
+                        scanCameraSelect.appendChild(opt);
+                    });
+
+                    if (remembered && cams.some(c => c.deviceId === remembered)) {
+                        scanCameraSelect.value = remembered;
+                    } else if (current && cams.some(c => c.deviceId === current)) {
+                        scanCameraSelect.value = current;
+                    }
+                } catch {
+                    // ignore
+                }
+            }
+
+            function resizeOverlay() {
+                if (!scanOverlay || !scanVideo) return;
+                const rect = scanVideo.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                scanOverlay.width = Math.max(1, Math.floor(rect.width * dpr));
+                scanOverlay.height = Math.max(1, Math.floor(rect.height * dpr));
+                if (overlayCtx) overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+
+            function clearOverlay() {
+                if (!overlayCtx || !scanOverlay) return;
+                overlayCtx.clearRect(0, 0, scanOverlay.width, scanOverlay.height);
+            }
+
+            function drawGuide() {
+                if (!overlayCtx || !scanVideo) return;
+                const rect = scanVideo.getBoundingClientRect();
+                const w = rect.width;
+                const h = rect.height;
+                const gw = Math.max(160, w * 0.80);
+                const gh = Math.max(70, h * 0.45);
+                const gx = (w - gw) / 2;
+                const gy = (h - gh) / 2;
+
+                overlayCtx.save();
+                overlayCtx.lineWidth = 2;
+                overlayCtx.strokeStyle = 'rgba(13, 110, 253, 0.55)';
+                overlayCtx.setLineDash([6, 6]);
+                overlayCtx.strokeRect(gx, gy, gw, gh);
+                overlayCtx.restore();
+            }
+
+            function mapPoint(x, y) {
+                const vw = scanVideo.videoWidth || 0;
+                const vh = scanVideo.videoHeight || 0;
+                const rect = scanVideo.getBoundingClientRect();
+                const cw = rect.width || 1;
+                const ch = rect.height || 1;
+                if (vw > 0 && vh > 0) {
+                    return { x: (x / vw) * cw, y: (y / vh) * ch };
+                }
+                return { x, y };
+            }
+
+            function drawPolygon(points) {
+                if (!overlayCtx || !points || points.length < 2) return;
+                overlayCtx.save();
+                overlayCtx.lineWidth = 3;
+                overlayCtx.strokeStyle = 'rgba(13, 110, 253, 0.95)';
+                overlayCtx.fillStyle = 'rgba(13, 110, 253, 0.12)';
+                overlayCtx.setLineDash([]);
+                overlayCtx.beginPath();
+                const p0 = mapPoint(points[0].x, points[0].y);
+                overlayCtx.moveTo(p0.x, p0.y);
+                for (let i = 1; i < points.length; i++) {
+                    const p = mapPoint(points[i].x, points[i].y);
+                    overlayCtx.lineTo(p.x, p.y);
+                }
+                overlayCtx.closePath();
+                overlayCtx.fill();
+                overlayCtx.stroke();
+                overlayCtx.restore();
+            }
+
+            function scheduleScanStop(delayMs) {
+                if (scanStopTimerId) {
+                    clearTimeout(scanStopTimerId);
+                    scanStopTimerId = null;
+                }
+                scanStopTimerId = window.setTimeout(() => {
+                    scanStopTimerId = null;
+                    stopScan();
+                }, delayMs);
+            }
+
+            function recalcRow(tr) {
+                const sel = tr.querySelector('.sel-prod');
+                const opt = sel && sel.selectedOptions && sel.selectedOptions.length ? sel.selectedOptions[0] : null;
+                tr.querySelector('.td-codigo').textContent = opt ? (opt.getAttribute('data-codigo') || '-') : '-';
+                tr.querySelector('.td-stock').textContent = opt ? (toNumber(opt.getAttribute('data-stock')).toFixed(2)) : '-';
+
+                const cant = toNumber(tr.querySelector('.inp-cant').value);
+                let precio = toNumber(tr.querySelector('.inp-precio').value);
+                if (precio <= 0 && opt) {
+                    precio = toNumber(opt.getAttribute('data-precio'));
+                    tr.querySelector('.inp-precio').value = precio.toFixed(2);
+                }
+                const subtotal = cant * precio;
+                tr.querySelector('.td-subtotal').textContent = subtotal.toFixed(2);
+                return subtotal;
+            }
+
+            function recalcTotal() {
+                let total = 0;
+                body.querySelectorAll('tr.venta-row').forEach(tr => {
+                    total += recalcRow(tr);
+                });
+                lblTotal.textContent = total.toFixed(2);
+            }
+
+            function nextIndex() {
+                let max = -1;
+                body.querySelectorAll('tr.venta-row').forEach(tr => {
+                    const idx = parseInt(tr.getAttribute('data-idx'), 10);
+                    if (!isNaN(idx) && idx > max) max = idx;
+                });
+                return max + 1;
+            }
+
+            function addRow() {
+                const idx = nextIndex();
+                const tr = document.createElement('tr');
+                tr.className = 'venta-row';
+                tr.setAttribute('data-idx', idx);
+                tr.innerHTML = `
+                    <td class="text-center"><button type="button" class="btn btn-danger btn-sm btn-del" title="Quitar"><i class="fa-solid fa-trash"></i></button></td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm inp-prod-search mb-1" placeholder="Buscar producto o código…" autocomplete="off" />
+                        <select class="form-select form-select-sm sel-prod" name="Items[${idx}].ProductoId">
+                            <option value="">-- Seleccionar --</option>
+                            ${productosCatalog.map(p => `<option value="${p.id}" data-codigo="${escapeHtmlAttr(p.codigo)}" data-precio="${p.precio}" data-stock="${p.stock}">${escapeHtmlText(p.nombre)}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="td-codigo">-</td>
+                    <td class="td-stock text-end">-</td>
+                    <td><input class="form-control form-control-sm text-end inp-cant" name="Items[${idx}].Cantidad" value="1" /></td>
+                    <td><input class="form-control form-control-sm text-end inp-precio" name="Items[${idx}].PrecioUnitario" value="0" /></td>
+                    <td class="td-subtotal text-end">0.00</td>
+                `;
+                body.appendChild(tr);
+                recalcTotal();
+            }
+
+            function findProductoByCodigo(codigo) {
+                if (!codigo) return null;
+                const code = ('' + codigo).trim();
+                if (!code) return null;
+                for (const p of productosCatalog) {
+                    const c = (p.codigo || '').trim();
+                    if (c && c === code) return p;
+                }
+                return null;
+            }
+
+            function applyScannedCode(raw) {
+                const code = ('' + (raw || '')).trim();
+                if (!code) return;
+
+                // Evitar duplicados por lectura repetida
+                const now = Date.now();
+                if (lastCode === code && (now - lastCodeAt) < 1500) return;
+                lastCode = code;
+                lastCodeAt = now;
+
+                const prod = findProductoByCodigo(code);
+                if (!prod) {
+                    setScanMsg('No se encontró producto con código: ' + code);
+                    return;
+                }
+
+                const productId = prod.id;
+
+                // Si ya existe en la venta, sumar cantidad
+                const existingRow = Array.from(body.querySelectorAll('tr.venta-row')).find(tr => {
+                    const sel = tr.querySelector('select.sel-prod');
+                    return sel && sel.value === productId;
+                });
+                if (existingRow) {
+                    const inpCant = existingRow.querySelector('.inp-cant');
+                    const current = toNumber(inpCant.value);
+                    inpCant.value = (current + 1).toFixed(0);
+                    recalcTotal();
+                    setScanMsg('Agregado: ' + (prod.nombre || '').trim() + ' (+' + 1 + ')');
+                    scheduleScanStop(600);
+                    return;
+                }
+
+                // Buscar una fila vacía; si no hay, crear
+                let targetRow = Array.from(body.querySelectorAll('tr.venta-row')).find(tr => {
+                    const sel = tr.querySelector('select.sel-prod');
+                    return sel && !sel.value;
+                });
+                if (!targetRow) {
+                    addRow();
+                    targetRow = body.querySelector('tr.venta-row:last-child');
+                }
+
+                const sel = targetRow.querySelector('select.sel-prod');
+                const inpCant = targetRow.querySelector('.inp-cant');
+                const inpPrecio = targetRow.querySelector('.inp-precio');
+
+                // Asegurar que el select tenga la opción (si estaba filtrado)
+                renderProductoOptions(sel, '');
+
+                sel.value = productId;
+                if (inpCant) inpCant.value = '1';
+                if (inpPrecio && toNumber(inpPrecio.value) <= 0) {
+                    inpPrecio.value = (toNumber(prod.precio)).toFixed(2);
+                }
+                sel.dispatchEvent(new Event('change', { bubbles: true }));
+                recalcTotal();
+                setScanMsg('Seleccionado: ' + (prod.nombre || '').trim());
+                scheduleScanStop(600);
+            }
+
+            async function startScan() {
+                if (!scanBtn || !scanPanel || !scanStopBtn || !scanVideo || !scanOverlay || !scanMsg || !scanCameraSelect) return;
+                if (scanRunning) return;
+                scanRunning = true;
+                lastCode = null;
+                lastCodeAt = 0;
+
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    setScanMsg('Este navegador no permite usar la cámara.');
+                    scanPanel.style.display = '';
+                    scanRunning = false;
+                    return;
+                }
+
+                // Preferir BarcodeDetector si existe; si no, ZXing
+                const hasBarcodeDetector = ('BarcodeDetector' in window);
+                const hasZXing = (typeof window.ZXing !== 'undefined');
+                if (!hasBarcodeDetector && !hasZXing) {
+                    setScanMsg('No se pudo inicializar el lector. Prueba Chrome/Edge actualizado.');
+                    scanPanel.style.display = '';
+                    scanRunning = false;
+                    return;
+                }
+
+                try {
+                    await refreshCameraList();
+                    resizeOverlay();
+                    clearOverlay();
+                    drawGuide();
+                    scanPanel.style.display = '';
+
+                    if (hasBarcodeDetector) {
+                        const selectedId = getSelectedCameraId();
+                        const constraints = {
+                            video: {
+                                ...(selectedId ? { deviceId: { exact: selectedId } } : { facingMode: { ideal: 'environment' } }),
+                                width: { ideal: 1280 },
+                                height: { ideal: 720 }
+                            },
+                            audio: false
+                        };
+                        scanStream = await navigator.mediaDevices.getUserMedia(constraints);
+                        scanVideo.srcObject = scanStream;
+
+                        try {
+                            scanDetector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128', 'upc_a', 'upc_e', 'itf'] });
+                        } catch {
+                            scanDetector = new BarcodeDetector();
+                        }
+
+                        const label = scanStream.getVideoTracks && scanStream.getVideoTracks()[0] ? scanStream.getVideoTracks()[0].label : null;
+                        setScanMsg(label ? ('Usando: ' + label + ' — Apunte la cámara al código…') : 'Apunte la cámara al código…');
+
+                        const tick = async () => {
+                            try {
+                                const barcodes = await scanDetector.detect(scanVideo);
+                                clearOverlay();
+                                drawGuide();
+                                if (barcodes && barcodes.length > 0) {
+                                    const b = barcodes[0];
+                                    if (b.cornerPoints && b.cornerPoints.length >= 4) {
+                                        const pts = b.cornerPoints.map(p => ({ x: p.x, y: p.y }));
+                                        drawPolygon(pts);
+                                    }
+                                    const raw = b.rawValue || '';
+                                    if (raw) {
+                                        applyScannedCode(raw);
+                                    }
+                                }
+                            } catch {
+                                // ignore
+                            }
+                            scanRafId = window.requestAnimationFrame(tick);
+                        };
+
+                        scanRafId = window.requestAnimationFrame(tick);
+                        return;
+                    }
+
+                    // ZXing fallback
+                    const selectedId = getSelectedCameraId();
+                    scanZXingReader = new window.ZXing.BrowserMultiFormatReader();
+                    scanZXingReader.decodeFromVideoDevice(selectedId || null, 'ventaBarcodeVideo', (result, err) => {
+                        if (result) {
+                            try {
+                                const pointsRaw = result.resultPoints || (result.getResultPoints && result.getResultPoints()) || [];
+                                const pts = (pointsRaw || []).map(p => {
+                                    const x = (typeof p.getX === 'function') ? p.getX() : (p.x ?? 0);
+                                    const y = (typeof p.getY === 'function') ? p.getY() : (p.y ?? 0);
+                                    return { x, y };
+                                });
+                                clearOverlay();
+                                drawGuide();
+                                if (pts.length >= 4) drawPolygon(pts);
+                            } catch {
+                                // ignore
+                            }
+
+                            const raw = result.getText ? result.getText() : (result.text || '');
+                            if (raw) applyScannedCode(raw);
+                        }
+                    });
+
+                    window.setTimeout(() => {
+                        try {
+                            const s = scanVideo.srcObject;
+                            const t = s && s.getVideoTracks ? s.getVideoTracks()[0] : null;
+                            const lbl = (t && t.label) ? t.label : null;
+                            setScanMsg(lbl ? ('Usando: ' + lbl + ' — Apunte la cámara al código…') : 'Apunte la cámara al código…');
+                        } catch { }
+                    }, 600);
+                } catch {
+                    setScanMsg('No se pudo acceder a la cámara. Permite el permiso y vuelve a intentar.');
+                    scanPanel.style.display = '';
+                    scanRunning = false;
+                }
+            }
+
+            async function stopScan() {
+                if (!scanRunning) return;
+
+                if (scanStopTimerId) {
+                    clearTimeout(scanStopTimerId);
+                    scanStopTimerId = null;
+                }
+
+                if (scanRafId) {
+                    window.cancelAnimationFrame(scanRafId);
+                    scanRafId = null;
+                }
+
+                if (scanZXingReader) {
+                    try { scanZXingReader.reset(); } catch { }
+                    scanZXingReader = null;
+                }
+
+                if (scanVideo) {
+                    try { scanVideo.pause(); } catch { }
+                    scanVideo.srcObject = null;
+                }
+
+                if (scanStream) {
+                    try { for (const t of scanStream.getTracks()) t.stop(); } catch { }
+                    scanStream = null;
+                }
+
+                scanDetector = null;
+                clearOverlay();
+                if (scanPanel) scanPanel.style.display = 'none';
+                scanRunning = false;
+            }
+
+            btnAdd.addEventListener('click', addRow);
+
+            if (scanBtn && scanStopBtn && scanCameraSelect) {
+                scanBtn.addEventListener('click', () => {
+                    if (!scanRunning) startScan();
+                    else stopScan();
+                });
+                scanStopBtn.addEventListener('click', () => stopScan());
+
+                scanCameraSelect.addEventListener('change', async () => {
+                    try { localStorage.setItem(cameraStorageKey, scanCameraSelect.value || ''); } catch { }
+                    if (scanRunning) {
+                        await stopScan();
+                        await startScan();
+                    }
+                });
+
+                try {
+                    const remembered = localStorage.getItem(cameraStorageKey) || '';
+                    if (remembered) scanCameraSelect.value = remembered;
+                } catch { }
+                refreshCameraList();
+            }
+
+            body.addEventListener('click', function (e) {
+                const btn = e.target.closest('.btn-del');
+                if (!btn) return;
+                const tr = btn.closest('tr');
+                if (tr) tr.remove();
+                recalcTotal();
+            });
+
+            body.addEventListener('change', function (e) {
+                if (e.target.classList.contains('sel-prod')) {
+                    // Si el usuario eligió un producto, limpiar el buscador de esa fila
+                    const tr = e.target.closest('tr.venta-row');
+                    if (tr) {
+                        const search = tr.querySelector('.inp-prod-search');
+                        if (search) search.value = '';
+                    }
+                    recalcTotal();
+                }
+            });
+
+            body.addEventListener('input', function (e) {
+                if (e.target.classList.contains('inp-prod-search')) {
+                    const tr = e.target.closest('tr.venta-row');
+                    if (!tr) return;
+                    const sel = tr.querySelector('select.sel-prod');
+                    if (!sel) return;
+                    renderProductoOptions(sel, e.target.value || '');
+                    return;
+                }
+            });
+            body.addEventListener('input', function (e) {
+                if (e.target.classList.contains('inp-cant') || e.target.classList.contains('inp-precio')) {
+                    recalcTotal();
+                }
+            });
+
+            recalcTotal();
+        })();
+    </script>
+}

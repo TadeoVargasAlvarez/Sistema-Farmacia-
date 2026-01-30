@@ -1,0 +1,246 @@
+﻿@model FarmaciaSalacor.Web.ViewModels.EscritorioViewModel
+@{
+    ViewData["Title"] = "Escritorio";
+}
+
+<div class="erp-page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <div class="erp-page-title">BIENVENIDO</div>
+            <div class="erp-page-subtitle">Farmacia Salacor - Sistema de Gestión Comercial</div>
+        </div>
+        <a class="btn btn-primary btn-sm" asp-area="" asp-controller="Home" asp-action="Index">Escritorio</a>
+    </div>
+</div>
+
+<div class="row g-2">
+    <div class="col-xl-2 col-md-4">
+        <div class="erp-tile">
+            <div class="erp-tile-icon bg-primary text-white"><i class="fa-solid fa-basket-shopping"></i></div>
+            <div>
+                <div class="erp-tile-value">@Model.ComprasDiaCount</div>
+                <div class="erp-tile-label">Compras</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4">
+        <div class="erp-tile">
+            <div class="erp-tile-icon bg-primary text-white"><i class="fa-solid fa-coins"></i></div>
+            <div>
+                <div class="erp-tile-value">@Model.ComprasDiaTotal.ToString("N2")</div>
+                <div class="erp-tile-label">Total compras</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4">
+        <div class="erp-tile">
+            <div class="erp-tile-icon bg-primary text-white"><i class="fa-solid fa-cart-shopping"></i></div>
+            <div>
+                <div class="erp-tile-value">@Model.VentasDiaCount</div>
+                <div class="erp-tile-label">Ventas</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4">
+        <div class="erp-tile">
+            <div class="erp-tile-icon bg-primary text-white"><i class="fa-solid fa-cash-register"></i></div>
+            <div>
+                <div class="erp-tile-value">@Model.VentasDiaTotal.ToString("N2")</div>
+                <div class="erp-tile-label">Total ventas</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4">
+        <div class="erp-tile">
+            <div class="erp-tile-icon bg-primary text-white"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+            <div>
+                <div class="erp-tile-value">@Model.CuentasPorCobrarCount</div>
+                <div class="erp-tile-label">Cuentas por cobrar</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4">
+        <div class="erp-tile">
+            <div class="erp-tile-icon bg-primary text-white"><i class="fa-solid fa-box"></i></div>
+            <div>
+                <div class="erp-tile-value">@Model.StockTotal.ToString("N2")</div>
+                <div class="erp-tile-label">Existencia</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-2 mt-2">
+    <div class="col-lg-8">
+        <div class="erp-panel">
+            <div class="erp-panel-header">Transacciones</div>
+            <div class="erp-panel-body">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="erp-trans-row">
+                            <div class="erp-trans-label"><i class="fa-solid fa-basket-shopping"></i> TOTAL COMPRAS</div>
+                            <div class="erp-trans-sub text-muted">@Model.Today.ToString("MMMM yyyy")</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="erp-trans-value">@Model.ComprasMesTotal.ToString("N2")</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="erp-trans-row">
+                            <div class="erp-trans-label"><i class="fa-solid fa-cart-shopping"></i> TOTAL VENTAS</div>
+                            <div class="erp-trans-sub text-muted">@Model.Today.ToString("MMMM yyyy")</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="erp-trans-value">@Model.VentasMesTotal.ToString("N2")</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="erp-trans-row">
+                            <div class="erp-trans-label"><i class="fa-solid fa-file-invoice-dollar"></i> CUENTAS POR COBRAR</div>
+                            <div class="erp-trans-sub text-muted">Saldo</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="erp-trans-value">@Model.CuentasPorCobrarSaldo.ToString("N2")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="erp-panel mt-2">
+            <div class="erp-panel-header">Transacciones de los últimos 7 días</div>
+            <div class="erp-panel-body">
+                <canvas id="chart7" height="80"></canvas>
+            </div>
+        </div>
+
+        <div class="erp-panel mt-2">
+            <div class="erp-panel-header">Movimientos recientes</div>
+            <div class="erp-panel-body p-0">
+                <table class="table table-sm table-striped table-hover mb-0 erp-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 160px;">Fecha</th>
+                            <th style="width: 120px;">Tipo</th>
+                            <th>Documento</th>
+                            <th style="width: 120px;" class="text-end">Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.MovimientosRecientes.Count == 0)
+                        {
+                            <tr><td colspan="4" class="text-muted small p-2">Sin movimientos registrados.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var m in Model.MovimientosRecientes)
+                            {
+                                <tr>
+                                    <td>@m.Fecha.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@m.Tipo</td>
+                                    <td>@(m.Documento ?? "-")</td>
+                                    <td class="text-end">@m.Cantidad.ToString("N2")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="erp-panel mb-2">
+            <div class="erp-panel-header">Cuentas por cobrar</div>
+            <div class="erp-panel-body">
+                <div class="text-muted small">Saldo total</div>
+                <div class="fw-bold" style="font-size:1.15rem;">@Model.CuentasPorCobrarSaldo.ToString("N2")</div>
+                <div class="mt-2">
+                    <a class="btn btn-primary btn-sm" asp-controller="Ventas" asp-action="Cxc"><i class="fa-solid fa-file-invoice-dollar"></i> Ver CxC</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="erp-panel mb-2">
+            <div class="erp-panel-header">Existencias</div>
+            <div class="erp-panel-body">
+                <div class="d-flex justify-content-between small">
+                    <span><i class="fa-solid fa-box"></i> Stock total</span>
+                    <strong>@Model.StockTotal.ToString("N2")</strong>
+                </div>
+                <hr class="my-2" />
+                <div class="d-flex justify-content-between small">
+                    <span><i class="fa-solid fa-triangle-exclamation text-warning"></i> Stock bajo</span>
+                    <strong>@Model.StockBajoCount</strong>
+                </div>
+                <div class="mt-2">
+                    <a class="btn btn-secondary btn-sm" asp-controller="Reportes" asp-action="StockBajo"><i class="fa-solid fa-arrow-down"></i> Stock bajo</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="erp-panel">
+            <div class="erp-panel-header">Vencimientos</div>
+            <div class="erp-panel-body">
+                <div class="d-flex justify-content-between small">
+                    <span><i class="fa-solid fa-circle-xmark text-danger"></i> Vencidos</span>
+                    <strong>@Model.VencidosCount</strong>
+                </div>
+                <hr class="my-2" />
+                <div class="d-flex justify-content-between small">
+                    <span><i class="fa-solid fa-calendar-xmark"></i> Por vencer (30 días)</span>
+                    <strong>@Model.PorVencerCount</strong>
+                </div>
+                <div class="mt-2">
+                    <a class="btn btn-secondary btn-sm" asp-controller="Reportes" asp-action="Vencimientos"><i class="fa-solid fa-calendar-xmark"></i> Ver</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Serie7Dias.Select(x => x.Dia.ToString("dd/MM")).ToList()));
+            const ventas = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Serie7Dias.Select(x => x.VentasTotal).ToList()));
+            const compras = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Serie7Dias.Select(x => x.ComprasTotal).ToList()));
+
+            const ctx = document.getElementById('chart7');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Ventas',
+                            data: ventas,
+                            tension: 0.2,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Compras',
+                            data: compras,
+                            tension: 0.2,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        })();
+    </script>
+}

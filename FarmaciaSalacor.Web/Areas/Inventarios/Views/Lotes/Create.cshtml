@@ -1,0 +1,63 @@
+@model FarmaciaSalacor.Web.Models.Lote
+@{
+    ViewData["Title"] = "Nuevo lote";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Inventarios &raquo; Lotes &raquo; Nuevo</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Registro</div>
+    <div class="erp-panel-body">
+        <form asp-action="Create" method="post" class="row g-2">
+            @Html.AntiForgeryToken()
+
+            <div class="col-md-6">
+                <label class="form-label form-label-sm">Producto</label>
+                <select class="form-select form-select-sm" asp-for="ProductoId" asp-items="ViewBag.Productos">
+                    <option value="">-- Seleccionar --</option>
+                </select>
+                <span asp-validation-for="ProductoId" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="NumeroLote" class="form-label form-label-sm"></label>
+                <input asp-for="NumeroLote" class="form-control form-control-sm" />
+                <span asp-validation-for="NumeroLote" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Vencimiento" class="form-label form-label-sm"></label>
+                <input asp-for="Vencimiento" type="date" class="form-control form-control-sm" />
+                <span asp-validation-for="Vencimiento" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Stock" class="form-label form-label-sm"></label>
+                <input asp-for="Stock" class="form-control form-control-sm" />
+                <span asp-validation-for="Stock" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" asp-for="Activo" />
+                    <label class="form-check-label small" asp-for="Activo">Activo</label>
+                </div>
+            </div>
+
+            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-action="Index">Cancelar</a>
+                <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+            </div>
+
+            <div class="col-12">
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

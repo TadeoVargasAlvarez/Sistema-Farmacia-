@@ -1,0 +1,40 @@
+@model FarmaciaSalacor.Web.Models.Categoria
+@{
+    ViewData["Title"] = "Editar categoría";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Inventarios &raquo; Categorías &raquo; Editar</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Edición</div>
+    <div class="erp-panel-body">
+        <form asp-action="Edit" method="post" class="row g-2">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div class="col-md-6">
+                <label asp-for="Nombre" class="form-label form-label-sm"></label>
+                <input asp-for="Nombre" class="form-control form-control-sm" />
+                <span asp-validation-for="Nombre" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" asp-for="Activa" />
+                    <label class="form-check-label small" asp-for="Activa">Activa</label>
+                </div>
+            </div>
+
+            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-action="Index">Cancelar</a>
+                <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

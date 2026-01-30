@@ -1,0 +1,162 @@
+@model FarmaciaSalacor.Web.ViewModels.TransferenciaNuevaViewModel
+@{
+    ViewData["Title"] = "Nueva transferencia";
+    var productos = (IEnumerable<FarmaciaSalacor.Web.ViewModels.ProductoLookupViewModel>)(ViewBag.Productos
+        ?? Array.Empty<FarmaciaSalacor.Web.ViewModels.ProductoLookupViewModel>());
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Transferencias &raquo; Nueva</div>
+    <div class="erp-page-subtitle">Entre almacenes</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Transferencia</div>
+    <div class="erp-panel-body">
+        <form asp-action="Nueva" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <label class="form-label form-label-sm">Desde almacén</label>
+                    <select class="form-select form-select-sm" asp-for="DesdeAlmacenId" asp-items="ViewBag.AlmacenesDesde"></select>
+                    <span asp-validation-for="DesdeAlmacenId" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label form-label-sm">Hacia almacén</label>
+                    <select class="form-select form-select-sm" asp-for="HaciaAlmacenId" asp-items="ViewBag.AlmacenesHacia"></select>
+                    <span asp-validation-for="HaciaAlmacenId" class="text-danger small"></span>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label form-label-sm">Documento</label>
+                    <input class="form-control form-control-sm" asp-for="Documento" placeholder="(auto)" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label form-label-sm">Observación</label>
+                    <input class="form-control form-control-sm" asp-for="Observacion" />
+                </div>
+            </div>
+
+            <div class="mt-2">
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+            </div>
+
+            <div class="erp-panel mt-2">
+                <div class="erp-toolbar">
+                    <button id="btnAddItem" type="button" class="btn btn-success btn-sm"><i class="fa-solid fa-plus"></i> Agregar</button>
+                </div>
+                <div class="erp-panel-body p-0">
+                    <table class="table table-sm table-striped table-hover mb-0 erp-table" id="tblItems">
+                        <thead>
+                            <tr>
+                                <th style="width:44px;"></th>
+                                <th>Producto</th>
+                                <th style="width:120px;">Código</th>
+                                <th style="width:110px;" class="text-end">Stock global</th>
+                                <th style="width:110px;" class="text-end">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Items.Count; i++)
+                            {
+                                <tr class="tr-row" data-idx="@i">
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-danger btn-sm btn-del" title="Quitar"><i class="fa-solid fa-trash"></i></button>
+                                    </td>
+                                    <td>
+                                        <select class="form-select form-select-sm sel-prod" name="Items[@i].ProductoId">
+                                            <option value="">-- Seleccionar --</option>
+                                            @foreach (var p in productos)
+                                            {
+                                                <option value="@p.Id" data-codigo="@p.Codigo" data-stock="@p.Stock">@p.Nombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td class="td-codigo">-</td>
+                                    <td class="td-stock text-end">-</td>
+                                    <td><input class="form-control form-control-sm text-end inp-cant" name="Items[@i].Cantidad" value="@Model.Items[i].Cantidad" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-2">
+                <a class="btn btn-secondary btn-sm" asp-action="Historial">Cancelar</a>
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const tbl = document.getElementById('tblItems');
+            const body = tbl.querySelector('tbody');
+            const btnAdd = document.getElementById('btnAddItem');
+
+            function toNumber(v) {
+                if (v === null || v === undefined) return 0;
+                const s = ('' + v).replace(',', '.');
+                const n = parseFloat(s);
+                return isNaN(n) ? 0 : n;
+            }
+
+            function recalcRow(tr) {
+                const sel = tr.querySelector('.sel-prod');
+                const opt = sel && sel.selectedOptions && sel.selectedOptions.length ? sel.selectedOptions[0] : null;
+                tr.querySelector('.td-codigo').textContent = opt ? (opt.getAttribute('data-codigo') || '-') : '-';
+                tr.querySelector('.td-stock').textContent = opt ? (toNumber(opt.getAttribute('data-stock')).toFixed(2)) : '-';
+            }
+
+            function nextIndex() {
+                let max = -1;
+                body.querySelectorAll('tr.tr-row').forEach(tr => {
+                    const idx = parseInt(tr.getAttribute('data-idx'), 10);
+                    if (!isNaN(idx) && idx > max) max = idx;
+                });
+                return max + 1;
+            }
+
+            function addRow() {
+                const idx = nextIndex();
+                const tr = document.createElement('tr');
+                tr.className = 'tr-row';
+                tr.setAttribute('data-idx', idx);
+                tr.innerHTML = `
+                    <td class="text-center"><button type="button" class="btn btn-danger btn-sm btn-del" title="Quitar"><i class="fa-solid fa-trash"></i></button></td>
+                    <td>
+                        <select class="form-select form-select-sm sel-prod" name="Items[${idx}].ProductoId">
+                            <option value="">-- Seleccionar --</option>
+                            ${Array.from(document.querySelectorAll('select.sel-prod option')).slice(1).map(o => `<option value="${o.value}" data-codigo="${o.getAttribute('data-codigo')}" data-stock="${o.getAttribute('data-stock')}">${o.textContent}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="td-codigo">-</td>
+                    <td class="td-stock text-end">-</td>
+                    <td><input class="form-control form-control-sm text-end inp-cant" name="Items[${idx}].Cantidad" value="1" /></td>
+                `;
+                body.appendChild(tr);
+            }
+
+            btnAdd.addEventListener('click', addRow);
+
+            body.addEventListener('click', function (e) {
+                const btn = e.target.closest('.btn-del');
+                if (!btn) return;
+                const tr = btn.closest('tr');
+                if (tr) tr.remove();
+            });
+
+            body.addEventListener('change', function (e) {
+                if (e.target.classList.contains('sel-prod')) {
+                    recalcRow(e.target.closest('tr'));
+                }
+            });
+
+            body.querySelectorAll('tr.tr-row').forEach(recalcRow);
+        })();
+    </script>
+}

@@ -1,0 +1,50 @@
+@model FarmaciaSalacor.Web.Models.Cliente
+@{
+    ViewData["Title"] = "Nuevo cliente";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Ventas &raquo; Clientes &raquo; Nuevo</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Registro</div>
+    <div class="erp-panel-body">
+        <form asp-action="ClienteCreate" method="post" class="row g-2">
+            @Html.AntiForgeryToken()
+
+            <div class="col-md-6">
+                <label asp-for="Nombre" class="form-label form-label-sm"></label>
+                <input asp-for="Nombre" class="form-control form-control-sm" />
+                <span asp-validation-for="Nombre" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Documento" class="form-label form-label-sm"></label>
+                <input asp-for="Documento" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Telefono" class="form-label form-label-sm"></label>
+                <input asp-for="Telefono" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-8">
+                <label asp-for="Direccion" class="form-label form-label-sm"></label>
+                <input asp-for="Direccion" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" asp-for="Activo" />
+                    <label class="form-check-label small" asp-for="Activo">Activo</label>
+                </div>
+            </div>
+
+            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-action="Clientes">Cancelar</a>
+                <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

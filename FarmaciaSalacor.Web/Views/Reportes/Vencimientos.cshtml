@@ -1,0 +1,69 @@
+@model List<FarmaciaSalacor.Web.Models.Producto>
+@{
+    ViewData["Title"] = "Vencimientos";
+    var dias = (int)(ViewBag.Dias ?? 30);
+    var today = (DateOnly)(ViewBag.Today ?? DateOnly.FromDateTime(DateTime.Today));
+    var cutoff = (DateOnly)(ViewBag.Cutoff ?? DateOnly.FromDateTime(DateTime.Today.AddDays(30)));
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Reportes &raquo; Vencimientos</div>
+    <div class="erp-page-subtitle">Hasta @cutoff (incluye vencidos)</div>
+</div>
+
+<div class="erp-panel mb-2">
+    <div class="erp-panel-header">Filtro</div>
+    <div class="erp-panel-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">Días</label>
+                <input class="form-control form-control-sm" type="number" name="dias" min="0" max="365" value="@dias" />
+            </div>
+            <div class="col-md-10 d-flex align-items-end justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-action="Vencimientos" asp-route-dias="30">30</a>
+                <a class="btn btn-secondary btn-sm" asp-action="Vencimientos" asp-route-dias="60">60</a>
+                <button class="btn btn-primary btn-sm" type="submit">Aplicar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-toolbar">
+        <div class="ms-auto text-muted small align-self-center">Total: <strong>@Model.Count</strong></div>
+    </div>
+    <div class="erp-panel-body p-0">
+        <table class="table table-sm table-striped table-hover mb-0 erp-table">
+            <thead>
+                <tr>
+                    <th style="width: 90px;">ID</th>
+                    <th style="width: 130px;">Código</th>
+                    <th>Producto</th>
+                    <th style="width: 120px;">Vencimiento</th>
+                    <th style="width: 110px;" class="text-end">Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-muted small p-2">Sin resultados.</td></tr>
+                }
+                else
+                {
+                    foreach (var p in Model)
+                    {
+                        var venc = p.Vencimiento;
+                        var isExpired = venc != null && venc.Value < today;
+                        <tr class="@(isExpired ? "table-danger" : "")">
+                            <td>@p.Id</td>
+                            <td>@p.Codigo</td>
+                            <td>@p.Nombre</td>
+                            <td>@(venc?.ToString("yyyy-MM-dd") ?? "-")</td>
+                            <td class="text-end">@p.Stock.ToString("N2")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,74 @@
+@model FarmaciaSalacor.Web.Models.Producto
+@{
+    ViewData["Title"] = "Editar producto";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Inventarios &raquo; Productos &raquo; Editar</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Edición de producto</div>
+    <div class="erp-panel-body">
+        <form asp-action="Edit" method="post" class="row g-2">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div class="col-md-3">
+                <label asp-for="Codigo" class="form-label form-label-sm"></label>
+                <input asp-for="Codigo" class="form-control form-control-sm" />
+                <span asp-validation-for="Codigo" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Nombre" class="form-label form-label-sm"></label>
+                <input asp-for="Nombre" class="form-control form-control-sm" />
+                <span asp-validation-for="Nombre" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Precio" class="form-label form-label-sm"></label>
+                <input asp-for="Precio" class="form-control form-control-sm" />
+                <span asp-validation-for="Precio" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <label class="form-label form-label-sm mb-0">Categoría</label>
+                    <a class="small" asp-area="Inventarios" asp-controller="Categorias" asp-action="Create">Nueva</a>
+                </div>
+                <select asp-for="CategoriaId" class="form-select form-select-sm" asp-items="ViewBag.Categorias">
+                    <option value="">(Sin categoría)</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">Marca</label>
+                <select asp-for="MarcaId" class="form-select form-select-sm" asp-items="ViewBag.Marcas">
+                    <option value="">(Sin marca)</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Stock" class="form-label form-label-sm"></label>
+                <input asp-for="Stock" class="form-control form-control-sm" />
+                <span asp-validation-for="Stock" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Vencimiento" class="form-label form-label-sm"></label>
+                <input asp-for="Vencimiento" class="form-control form-control-sm" type="date" />
+                <span asp-validation-for="Vencimiento" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-action="Index">Cancelar</a>
+                <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,53 @@
+@model List<FarmaciaSalacor.Web.Models.Usuario>
+@{
+    ViewData["Title"] = "Usuarios";
+    var err = TempData["Error"] as string;
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Configuración &raquo; Usuarios</div>
+    <div class="erp-page-subtitle">Gestión de accesos</div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger p-2 mb-2">@err</div>
+}
+
+<div class="erp-panel">
+    <div class="erp-toolbar">
+        <a class="btn btn-success btn-sm" asp-action="UsuarioCreate"><i class="fa-solid fa-plus"></i> Nuevo</a>
+        <div class="ms-auto text-muted small align-self-center">Total: <strong>@Model.Count</strong></div>
+    </div>
+    <div class="erp-panel-body p-0">
+        <table class="table table-sm table-striped table-hover mb-0 erp-table">
+            <thead>
+                <tr>
+                    <th style="width: 90px;">ID</th>
+                    <th style="width: 160px;">Usuario</th>
+                    <th>Nombre</th>
+                    <th style="width: 110px;">Rol</th>
+                    <th style="width: 80px;" class="text-center">Activo</th>
+                    <th style="width: 200px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model)
+                {
+                    <tr>
+                        <td>@u.Id</td>
+                        <td>@u.Username</td>
+                        <td>@(u.NombreCompleto ?? "-")</td>
+                        <td>@u.Rol</td>
+                        <td class="text-center">@(u.Activo ? "Sí" : "No")</td>
+                        <td class="text-end">
+                            <a class="btn btn-primary btn-sm" asp-action="UsuarioEdit" asp-route-id="@u.Id" title="Editar"><i class="fa-solid fa-pen"></i></a>
+                            <a class="btn btn-secondary btn-sm" asp-action="UsuarioResetPassword" asp-route-id="@u.Id" title="Reset password"><i class="fa-solid fa-key"></i></a>
+                            <a class="btn btn-danger btn-sm" asp-action="UsuarioDelete" asp-route-id="@u.Id" title="Eliminar"><i class="fa-solid fa-trash"></i></a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

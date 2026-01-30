@@ -1,0 +1,174 @@
+@model FarmaciaSalacor.Web.ViewModels.CajaDiaViewModel
+@{
+    ViewData["Title"] = "Caja";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Caja</div>
+    <div class="erp-page-subtitle">Resumen diario</div>
+</div>
+
+<div class="erp-panel mb-2">
+    <div class="erp-panel-header">Fecha</div>
+    <div class="erp-panel-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">Día</label>
+                <input class="form-control form-control-sm" type="date" name="fecha" value="@Model.Fecha.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-10 d-flex align-items-end justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-action="Index">Hoy</a>
+                <button class="btn btn-primary btn-sm" type="submit">Aplicar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-2">
+    <div class="col-md-3">
+        <div class="erp-kpi">
+            <div class="erp-kpi-label">Ingresos (contado + cobros)</div>
+            <div class="erp-kpi-value">@Model.Ingresos.ToString("N2")</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="erp-kpi">
+            <div class="erp-kpi-label">Egresos (compras)</div>
+            <div class="erp-kpi-value">@Model.Egresos.ToString("N2")</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="erp-kpi">
+            <div class="erp-kpi-label">Neto</div>
+            <div class="erp-kpi-value">@Model.Neto.ToString("N2")</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="erp-kpi">
+            <div class="erp-kpi-label">Ventas crédito (solo registro)</div>
+            <div class="erp-kpi-value">@Model.VentasCredito.ToString("N2")</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-2 mt-2">
+    <div class="col-lg-6">
+        <div class="erp-panel">
+            <div class="erp-panel-header">Ventas del día</div>
+            <div class="erp-panel-body p-0">
+                <table class="table table-sm table-striped table-hover mb-0 erp-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 160px;">Fecha</th>
+                            <th style="width: 130px;">Documento</th>
+                            <th>Cliente</th>
+                            <th style="width: 90px;">Tipo</th>
+                            <th style="width: 120px;" class="text-end">Total</th>
+                            <th style="width: 40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Ventas.Count == 0)
+                        {
+                            <tr><td colspan="6" class="text-muted small p-2">Sin ventas.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var v in Model.Ventas)
+                            {
+                                <tr>
+                                    <td>@v.Fecha.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@(v.NumeroDocumento ?? "-")</td>
+                                    <td>@(v.Cliente?.Nombre ?? "-")</td>
+                                    <td>@(v.EsCredito ? "Crédito" : "Contado")</td>
+                                    <td class="text-end">@v.Total.ToString("N2")</td>
+                                    <td class="text-end">
+                                        <a class="btn btn-primary btn-sm" asp-controller="Ventas" asp-action="Detalle" asp-route-id="@v.Id"><i class="fa-solid fa-eye"></i></a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="erp-panel">
+            <div class="erp-panel-header">Cobros/Abonos del día</div>
+            <div class="erp-panel-body p-0">
+                <table class="table table-sm table-striped table-hover mb-0 erp-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 160px;">Fecha</th>
+                            <th style="width: 130px;">Venta</th>
+                            <th>Cliente</th>
+                            <th style="width: 120px;" class="text-end">Monto</th>
+                            <th style="width: 40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Pagos.Count == 0)
+                        {
+                            <tr><td colspan="5" class="text-muted small p-2">Sin cobros.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var p in Model.Pagos)
+                            {
+                                <tr>
+                                    <td>@p.Fecha.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@(p.Venta?.NumeroDocumento ?? $"#{p.VentaId}")</td>
+                                    <td>@(p.Venta?.Cliente?.Nombre ?? "-")</td>
+                                    <td class="text-end">@p.Monto.ToString("N2")</td>
+                                    <td class="text-end">
+                                        <a class="btn btn-primary btn-sm" asp-controller="Ventas" asp-action="Detalle" asp-route-id="@p.VentaId"><i class="fa-solid fa-eye"></i></a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="erp-panel mt-2">
+    <div class="erp-panel-header">Compras del día</div>
+    <div class="erp-panel-body p-0">
+        <table class="table table-sm table-striped table-hover mb-0 erp-table">
+            <thead>
+                <tr>
+                    <th style="width: 160px;">Fecha</th>
+                    <th style="width: 130px;">Documento</th>
+                    <th>Proveedor</th>
+                    <th style="width: 120px;" class="text-end">Total</th>
+                    <th style="width: 40px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.ComprasLista.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-muted small p-2">Sin compras.</td></tr>
+                }
+                else
+                {
+                    foreach (var c in Model.ComprasLista)
+                    {
+                        <tr>
+                            <td>@c.Fecha.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@(c.NumeroDocumento ?? "-")</td>
+                            <td>@(c.Proveedor?.Nombre ?? "-")</td>
+                            <td class="text-end">@c.Total.ToString("N2")</td>
+                            <td class="text-end">
+                                <a class="btn btn-primary btn-sm" asp-controller="Compras" asp-action="Detalle" asp-route-id="@c.Id"><i class="fa-solid fa-eye"></i></a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+

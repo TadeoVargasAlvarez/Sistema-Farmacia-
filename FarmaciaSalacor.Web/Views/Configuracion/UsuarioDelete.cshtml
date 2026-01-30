@@ -1,0 +1,27 @@
+@model FarmaciaSalacor.Web.Models.Usuario
+@{
+    ViewData["Title"] = "Eliminar usuario";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Configuración &raquo; Usuarios &raquo; Eliminar</div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Confirmación</div>
+    <div class="erp-panel-body">
+        <div class="alert alert-warning p-2 mb-2">¿Seguro que deseas eliminar este usuario?</div>
+        <table class="table table-sm mb-2">
+            <tr><th style="width:160px;">Usuario</th><td>@Model.Username</td></tr>
+            <tr><th>Rol</th><td>@Model.Rol</td></tr>
+            <tr><th>Activo</th><td>@(Model.Activo ? "Sí" : "No")</td></tr>
+        </table>
+
+        <form asp-action="UsuarioDeleteConfirmed" method="post" class="d-flex justify-content-end gap-2">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <a class="btn btn-secondary btn-sm" asp-action="Usuarios">Cancelar</a>
+            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+        </form>
+    </div>
+</div>

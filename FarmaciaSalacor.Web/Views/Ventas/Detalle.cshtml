@@ -1,0 +1,91 @@
+@model FarmaciaSalacor.Web.Models.Venta
+@{
+    ViewData["Title"] = "Detalle de venta";
+    var pagos = (IEnumerable<FarmaciaSalacor.Web.Models.PagoVenta>)(ViewBag.Pagos ?? Array.Empty<FarmaciaSalacor.Web.Models.PagoVenta>());
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Ventas &raquo; Detalle</div>
+    <div class="erp-page-subtitle">@((Model.NumeroDocumento ?? $"Venta #{Model.Id}"))</div>
+</div>
+
+<div class="erp-panel mb-2">
+    <div class="erp-panel-header">Cabecera</div>
+    <div class="erp-panel-body p-2">
+        <div class="row g-2">
+            <div class="col-md-3"><strong>Fecha:</strong> @Model.Fecha.ToString("yyyy-MM-dd HH:mm")</div>
+            <div class="col-md-3"><strong>Documento:</strong> @(Model.NumeroDocumento ?? "-")</div>
+            <div class="col-md-4"><strong>Cliente:</strong> @(Model.Cliente?.Nombre ?? "Consumidor final")</div>
+            <div class="col-md-2"><strong>Tipo:</strong> @(Model.EsCredito ? "Crédito" : "Contado")</div>
+        </div>
+        <div class="row g-2 mt-1">
+            <div class="col-md-3"><strong>Total:</strong> @Model.Total.ToString("N2")</div>
+            <div class="col-md-3"><strong>Pagado:</strong> @Model.Pagado.ToString("N2")</div>
+            <div class="col-md-3"><strong>Saldo:</strong> @((Model.Total - Model.Pagado).ToString("N2"))</div>
+            <div class="col-md-3"><strong>Usuario:</strong> @(Model.Usuario?.Username ?? "-")</div>
+        </div>
+    </div>
+</div>
+
+<div class="erp-panel mb-2">
+    <div class="erp-panel-header">Detalle</div>
+    <div class="erp-panel-body p-0">
+        <table class="table table-sm table-striped table-hover mb-0 erp-table">
+            <thead>
+                <tr>
+                    <th style="width:90px;">ID</th>
+                    <th>Producto</th>
+                    <th style="width:120px;" class="text-end">Cantidad</th>
+                    <th style="width:140px;" class="text-end">Precio</th>
+                    <th style="width:140px;" class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.Detalles)
+                {
+                    <tr>
+                        <td>@d.Id</td>
+                        <td>@(d.Producto?.Nombre ?? "-")</td>
+                        <td class="text-end">@d.Cantidad.ToString("N2")</td>
+                        <td class="text-end">@d.PrecioUnitario.ToString("N2")</td>
+                        <td class="text-end">@d.Subtotal.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Pagos</div>
+    <div class="erp-panel-body p-0">
+        <table class="table table-sm table-striped table-hover mb-0 erp-table">
+            <thead>
+                <tr>
+                    <th style="width:170px;">Fecha</th>
+                    <th style="width:140px;" class="text-end">Monto</th>
+                    <th style="width:160px;">Usuario</th>
+                    <th>Observación</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!pagos.Any())
+                {
+                    <tr><td colspan="4" class="text-muted small p-2">Sin pagos registrados.</td></tr>
+                }
+                else
+                {
+                    foreach (var p in pagos)
+                    {
+                        <tr>
+                            <td>@p.Fecha.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td class="text-end">@p.Monto.ToString("N2")</td>
+                            <td>@(p.Usuario?.Username ?? "-")</td>
+                            <td>@(p.Observacion ?? "-")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,50 @@
+@model FarmaciaSalacor.Web.Models.Compra
+@{
+    ViewData["Title"] = "Detalle de compra";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Compras &raquo; Detalle</div>
+    <div class="erp-page-subtitle">@((Model.NumeroDocumento ?? $"Compra #{Model.Id}"))</div>
+</div>
+
+<div class="erp-panel mb-2">
+    <div class="erp-panel-header">Cabecera</div>
+    <div class="erp-panel-body p-2">
+        <div class="row g-2">
+            <div class="col-md-3"><strong>Fecha:</strong> @Model.Fecha.ToString("yyyy-MM-dd HH:mm")</div>
+            <div class="col-md-3"><strong>Documento:</strong> @(Model.NumeroDocumento ?? "-")</div>
+            <div class="col-md-4"><strong>Proveedor:</strong> @(Model.Proveedor?.Nombre ?? "-")</div>
+            <div class="col-md-2"><strong>Total:</strong> @Model.Total.ToString("N2")</div>
+        </div>
+    </div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-panel-header">Detalle</div>
+    <div class="erp-panel-body p-0">
+        <table class="table table-sm table-striped table-hover mb-0 erp-table">
+            <thead>
+                <tr>
+                    <th style="width:90px;">ID</th>
+                    <th>Producto</th>
+                    <th style="width:120px;" class="text-end">Cantidad</th>
+                    <th style="width:140px;" class="text-end">Costo</th>
+                    <th style="width:140px;" class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.Detalles)
+                {
+                    <tr>
+                        <td>@d.Id</td>
+                        <td>@(d.Producto?.Nombre ?? "-")</td>
+                        <td class="text-end">@d.Cantidad.ToString("N2")</td>
+                        <td class="text-end">@d.CostoUnitario.ToString("N2")</td>
+                        <td class="text-end">@d.Subtotal.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

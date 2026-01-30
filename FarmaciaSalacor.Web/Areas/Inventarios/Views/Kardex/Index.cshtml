@@ -1,0 +1,81 @@
+@model FarmaciaSalacor.Web.Areas.Inventarios.Controllers.KardexIndexVm
+@{
+    ViewData["Title"] = "Kardex";
+}
+
+<div class="erp-page-header">
+    <div class="erp-page-title">Inventarios &raquo; Kardex</div>
+    <div class="erp-page-subtitle">Movimientos (máx. 500 últimos)</div>
+</div>
+
+<div class="erp-panel mb-2">
+    <div class="erp-panel-header">Filtros</div>
+    <div class="erp-panel-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-5">
+                <label class="form-label form-label-sm">Producto</label>
+                <select class="form-select form-select-sm" name="productoId" asp-items="ViewBag.Productos">
+                    <option value="">-- Todos --</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">Desde</label>
+                <input class="form-control form-control-sm" type="date" name="desde" value="@(Model.Desde?.ToString("yyyy-MM-dd") ?? "")" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">Hasta</label>
+                <input class="form-control form-control-sm" type="date" name="hasta" value="@(Model.Hasta?.ToString("yyyy-MM-dd") ?? "")" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">Tipo contiene</label>
+                <input class="form-control form-control-sm" type="text" name="tipo" value="@(Model.Tipo ?? "")" />
+            </div>
+
+            <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                <a class="btn btn-secondary btn-sm" asp-action="Index">Limpiar</a>
+                <button class="btn btn-primary btn-sm" type="submit">Aplicar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="erp-panel">
+    <div class="erp-toolbar">
+        <div class="text-muted small align-self-center">Total mostrado: <strong>@Model.Items.Count</strong></div>
+    </div>
+    <div class="erp-panel-body p-0">
+        <table class="table table-sm table-striped table-hover mb-0 erp-table">
+            <thead>
+                <tr>
+                    <th style="width:170px;">Fecha</th>
+                    <th style="width:140px;">Tipo</th>
+                    <th style="width:180px;">Documento</th>
+                    <th>Producto</th>
+                    <th style="width:120px;" class="text-end">Cantidad</th>
+                    <th style="width:140px;">Usuario</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-muted small p-2">No hay movimientos.</td></tr>
+                }
+                else
+                {
+                    foreach (var m in Model.Items)
+                    {
+                        <tr>
+                            <td>@m.Fecha.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@m.Tipo</td>
+                            <td>@(m.Documento ?? "-")</td>
+                            <td>@(m.Producto?.Nombre ?? "-")</td>
+                            <td class="text-end">@m.Cantidad.ToString("N2")</td>
+                            <td>@(m.Usuario?.Username ?? "-")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
