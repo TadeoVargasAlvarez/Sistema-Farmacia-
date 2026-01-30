@@ -24,7 +24,10 @@ if (builder.Environment.IsDevelopment())
 var defaultConnection = builder.Configuration.GetConnectionString("Default");
 if (string.IsNullOrWhiteSpace(defaultConnection))
 {
-    throw new InvalidOperationException("Falta ConnectionStrings:Default en appsettings.json");
+    // Permite arrancar (y pasar healthchecks) aun cuando el entorno no tenga variables.
+    // En Railway se recomienda configurar ConnectionStrings__Default (por ejemplo: ${{ MySQL.MYSQL_URL }}).
+    Console.Error.WriteLine("WARNING: ConnectionStrings:Default no está configurada. Usando SQLite local como fallback. Configure ConnectionStrings__Default en el entorno para producción.");
+    defaultConnection = "Data Source=farmacia.local.db";
 }
 
 static bool LooksLikeMySqlUrl(string value)
