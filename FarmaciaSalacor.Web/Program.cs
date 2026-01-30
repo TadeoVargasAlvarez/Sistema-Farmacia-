@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -76,6 +77,23 @@ var connectionToUse = defaultConnection;
 if (LooksLikeMySqlUrl(connectionToUse))
 {
     connectionToUse = MySqlUrlToConnectionString(connectionToUse);
+}
+
+// Si la connection string de MySQL está mal formada, MySqlConnector puede lanzar excepciones
+// que terminan en HTTP 500 en cualquier request. Preferimos hacer fallback a SQLite y loguear.
+if (isMySql)
+{
+    try
+    {
+        _ = new MySqlConnectionStringBuilder(connectionToUse);
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"WARNING: ConnectionStrings:Default parece inválida para MySQL. Se usará SQLite fallback. Error: {ex.Message}");
+        isMySql = false;
+        isMariaDb = false;
+        connectionToUse = "Data Source=farmacia.local.db";
+    }
 }
 
 
@@ -151,7 +169,20 @@ app.UseForwardedHeaders(forwardedOptions);
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    // Permite activar la página de excepción detallada en producción SOLO cuando se necesite debug.
+    // En Railway se puede setear FARMACIA_DEBUG_ERRORS=true temporalmente y luego quitarlo.
+    var debugErrors = string.Equals(Environment.GetEnvironmentVariable("FARMACIA_DEBUG_ERRORS"), "true", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Environment.GetEnvironmentVariable("FARMACIA_DEBUG_ERRORS"), "1", StringComparison.OrdinalIgnoreCase);
+
+    if (debugErrors)
+    {
+        app.UseDeveloperExceptionPage();
+    }
+    else
+    {
+        app.UseExceptionHandler("/Home/Error");
+    }
+
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
