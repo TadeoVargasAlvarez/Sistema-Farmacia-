@@ -243,6 +243,80 @@ public class VentasController : Controller
         return View(venta);
     }
 
+    [Authorize(Roles = Roles.Admin)]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Eliminar(int id)
+    {
+        var userId = GetUserId();
+        if (userId is null) return Forbid();
+
+        var venta = await _db.Ventas
+            .Include(x => x.Detalles)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (venta is null)
+        {
+            return RedirectToAction(nameof(Historial));
+        }
+
+        var pagos = await _db.PagosVenta
+            .Where(x => x.VentaId == id)
+            .ToListAsync();
+
+        var productoIds = venta.Detalles.Select(d => d.ProductoId).Distinct().ToList();
+        var productos = await _db.Productos.Where(x => productoIds.Contains(x.Id)).ToListAsync();
+
+        await using var tx = await _db.Database.BeginTransactionAsync();
+
+        // Revertir stock y dejar un movimiento de anulación (auditable).
+        foreach (var d in venta.Detalles)
+        {
+            var p = productos.FirstOrDefault(x => x.Id == d.ProductoId);
+            if (p is null) continue;
+
+            p.Stock += d.Cantidad;
+            _db.MovimientosInventario.Add(new MovimientoInventario
+            {
+                Fecha = DateTime.Now,
+                Tipo = "Anulación Venta",
+                Documento = venta.NumeroDocumento,
+                ProductoId = p.Id,
+                Cantidad = d.Cantidad,
+                UsuarioId = userId.Value
+            });
+        }
+
+        // Intentar remover el movimiento original de la venta (si existe), para que el kardex quede consistente.
+        if (!string.IsNullOrWhiteSpace(venta.NumeroDocumento))
+        {
+            var movs = await _db.MovimientosInventario
+                .Where(x => x.Tipo == "Venta" && x.Documento == venta.NumeroDocumento)
+                .ToListAsync();
+            if (movs.Count > 0)
+            {
+                _db.MovimientosInventario.RemoveRange(movs);
+            }
+        }
+
+        if (pagos.Count > 0)
+        {
+            _db.PagosVenta.RemoveRange(pagos);
+        }
+
+        if (venta.Detalles.Count > 0)
+        {
+            _db.DetallesVenta.RemoveRange(venta.Detalles);
+        }
+
+        _db.Ventas.Remove(venta);
+
+        await _db.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        return RedirectToAction(nameof(Historial));
+    }
+
     [Authorize(Roles = Roles.Admin + "," + Roles.Cajero)]
     [HttpGet]
     public async Task<IActionResult> Clientes()

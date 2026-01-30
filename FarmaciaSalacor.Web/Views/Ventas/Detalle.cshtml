@@ -89,3 +89,17 @@
         </table>
     </div>
 </div>
+
+<div class="d-flex justify-content-end gap-2 mt-2">
+    <a class="btn btn-secondary btn-sm" asp-action="Historial"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+    @if (User.IsInRole(FarmaciaSalacor.Web.Models.Roles.Admin))
+    {
+        <form asp-action="Eliminar" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('¿Eliminar esta venta? Esto revertirá el stock y eliminará el registro.');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger btn-sm">
+                <i class="fa-solid fa-trash"></i>
+                Eliminar venta
+            </button>
+        </form>
+    }
+</div>
