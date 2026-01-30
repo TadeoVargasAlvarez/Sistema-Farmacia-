@@ -25,3 +25,6 @@ FarmaciaSalacor.Web/publish/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Local publish test artifacts
+_local_publish_test/
