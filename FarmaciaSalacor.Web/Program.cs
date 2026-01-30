@@ -1,10 +1,18 @@
 using FarmaciaSalacor.Web.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Railway expone el puerto en la variable PORT. Kestrel debe escuchar en 0.0.0.0.
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
 
 // Add services to the container.
 var mvcBuilder = builder.Services.AddControllersWithViews();
@@ -85,6 +93,16 @@ builder.Services.AddAuthorization(options =>
 });
 
 var app = builder.Build();
+
+// Railway y otros PaaS suelen pasar la IP y el esquema real por headers.
+// Esto evita bucles con UseHttpsRedirection cuando hay terminación TLS en el proxy.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+    // Aceptar forwarded headers en entornos detrás de proxy (Railway).
+    KnownNetworks = { },
+    KnownProxies = { }
+});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
