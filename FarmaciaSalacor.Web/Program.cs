@@ -8,12 +8,16 @@ using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Railway expone el puerto en la variable PORT. Kestrel debe escuchar en 0.0.0.0.
-var port = Environment.GetEnvironmentVariable("PORT");
-if (!string.IsNullOrWhiteSpace(port))
+// En contenedores (Railway), Kestrel debe escuchar en 0.0.0.0.
+// Railway expone el puerto en la variable PORT. Si no existe, usamos 8080 como default.
+var portEnv = Environment.GetEnvironmentVariable("PORT");
+var portToUse = 8080;
+if (!string.IsNullOrWhiteSpace(portEnv) && int.TryParse(portEnv, out var parsedPort) && parsedPort > 0)
 {
-    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+    portToUse = parsedPort;
 }
+
+builder.WebHost.UseUrls($"http://0.0.0.0:{portToUse}");
 
 // Add services to the container.
 var mvcBuilder = builder.Services.AddControllersWithViews();
