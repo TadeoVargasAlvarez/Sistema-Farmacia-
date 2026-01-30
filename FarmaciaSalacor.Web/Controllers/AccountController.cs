@@ -12,13 +12,6 @@ namespace FarmaciaSalacor.Web.Controllers;
 [AllowAnonymous]
 public class AccountController : Controller
 {
-    private readonly AppDbContext _db;
-
-    public AccountController(AppDbContext db)
-    {
-        _db = db;
-    }
-
     [HttpGet]
     public IActionResult Login(string? returnUrl = null)
     {
@@ -50,7 +43,7 @@ public class AccountController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
+    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null, [FromServices] AppDbContext db = null!)
     {
         if (!string.IsNullOrWhiteSpace(returnUrl)
             && (returnUrl.Length > 512 || returnUrl.Contains("/Account/Login", StringComparison.OrdinalIgnoreCase)))
@@ -65,7 +58,7 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var user = await _db.Usuarios
+        var user = await db.Usuarios
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Username == model.Username);
 
