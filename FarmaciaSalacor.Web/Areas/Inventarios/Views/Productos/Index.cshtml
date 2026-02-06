@@ -1,6 +1,13 @@
 @model List<FarmaciaSalacor.Web.Models.Producto>
 @{
     ViewData["Title"] = "Productos";
+
+    static int? DiasParaVencimiento(DateOnly? vencimiento)
+    {
+        if (!vencimiento.HasValue) return null;
+        var d = vencimiento.Value.ToDateTime(TimeOnly.MinValue).Date;
+        return (d - DateTime.Today).Days;
+    }
 }
 
 <div class="erp-page-header">
@@ -19,52 +26,69 @@
         <a id="btnEliminar" class="btn btn-danger btn-sm disabled" href="#" aria-disabled="true">
             <i class="fa-solid fa-trash"></i> Eliminar
         </a>
-        <div class="ms-auto text-muted small align-self-center">
-            Total: <strong>@Model.Count</strong>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <input id="invSearch" class="form-control form-control-sm" style="max-width:220px;" placeholder="Buscar otro" autocomplete="off" />
+            <input id="invBarcode" class="form-control form-control-sm" style="max-width:220px;" placeholder="Código de barras..." autocomplete="off" />
+            <div class="text-muted small align-self-center ms-2">
+                Total: <strong id="lblInvTotal">@Model.Count</strong>
+            </div>
         </div>
     </div>
 
     <div class="erp-panel-body p-0">
-        <table class="table table-sm table-striped table-hover mb-0 erp-table">
+        <div class="table-responsive">
+        <table class="table table-sm table-striped table-hover mb-0 erp-table" id="tblProductos">
             <thead>
                 <tr>
                     <th style="width:36px;"></th>
-                    <th style="width:120px;">Código</th>
-                    <th>Producto</th>
-                    <th style="width:160px;">Categoría</th>
-                    <th style="width:160px;">Marca</th>
-                    <th style="width:90px;" class="text-end">Stock</th>
-                    <th style="width:110px;" class="text-end">Precio</th>
+                    <th style="width:110px;">Cod</th>
+                    <th style="min-width:220px;">Nombre Comercial</th>
+                    <th style="min-width:220px;">Nombre Genérico</th>
+                    <th style="min-width:170px;">Forma Farmacéutica</th>
+                    <th style="min-width:140px;">Concentración</th>
+                    <th style="min-width:180px;">Acción Terapéutica</th>
+                    <th style="min-width:160px;">Presentación</th>
+                    <th style="min-width:160px;">Laboratorio</th>
+                    <th style="width:120px;" class="text-end">Precio Venta</th>
+                    <th style="width:110px;" class="text-end">Existencia</th>
                     <th style="width:120px;">Vencimiento</th>
+                    <th style="width:80px;" class="text-end">Días</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Count == 0)
                 {
                     <tr>
-                        <td colspan="8" class="text-muted small p-2">No hay productos registrados.</td>
+                        <td colspan="13" class="text-muted small p-2">No hay productos registrados.</td>
                     </tr>
                 }
                 else
                 {
                     foreach (var p in Model)
                     {
+                        var dias = DiasParaVencimiento(p.Vencimiento);
                         <tr class="erp-row-select" data-id="@p.Id">
                             <td class="text-center">
                                 <input class="form-check-input" type="radio" name="selProducto" value="@p.Id" />
                             </td>
-                            <td>@p.Codigo</td>
+                            <td class="col-codigo">@p.Codigo</td>
                             <td>@p.Nombre</td>
+                            <td>@(string.IsNullOrWhiteSpace(p.NombreGenerico) ? "-" : p.NombreGenerico)</td>
+                            <td>@(string.IsNullOrWhiteSpace(p.FormaFarmaceutica) ? "-" : p.FormaFarmaceutica)</td>
+                            <td>@(string.IsNullOrWhiteSpace(p.Concentracion) ? "-" : p.Concentracion)</td>
                             <td>@(p.Categoria?.Nombre ?? "-")</td>
+                            <td>@(string.IsNullOrWhiteSpace(p.Presentacion) ? "-" : p.Presentacion)</td>
                             <td>@(p.Marca?.Nombre ?? "-")</td>
-                            <td class="text-end">@p.Stock.ToString("N2")</td>
                             <td class="text-end">@p.Precio.ToString("N2")</td>
+                            <td class="text-end">@p.Stock.ToString("N2")</td>
                             <td>@(p.Vencimiento?.ToString("yyyy-MM-dd") ?? "-")</td>
+                            <td class="text-end">@(dias.HasValue ? dias.Value.ToString("N0") : "-")</td>
                         </tr>
                     }
                 }
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 
@@ -73,6 +97,10 @@
         (function () {
             const btnEditar = document.getElementById('btnEditar');
             const btnEliminar = document.getElementById('btnEliminar');
+            const tbl = document.getElementById('tblProductos');
+            const invSearch = document.getElementById('invSearch');
+            const invBarcode = document.getElementById('invBarcode');
+            const lblInvTotal = document.getElementById('lblInvTotal');
 
             function setSelected(id) {
                 if (!id) {
@@ -105,6 +133,35 @@
                     }
                 });
             });
+
+            function norm(s) {
+                return ('' + (s ?? '')).trim().toLowerCase();
+            }
+
+            function applyFilter() {
+                if (!tbl) return;
+                const q = norm(invSearch ? invSearch.value : '');
+                const qb = norm(invBarcode ? invBarcode.value : '');
+
+                let visible = 0;
+                tbl.querySelectorAll('tbody tr.erp-row-select').forEach(tr => {
+                    const rowText = norm(tr.textContent);
+                    const codigoCell = tr.querySelector('.col-codigo');
+                    const codigo = norm(codigoCell ? codigoCell.textContent : '');
+
+                    const okGeneral = !q || rowText.includes(q);
+                    const okBarcode = !qb || codigo.includes(qb);
+                    const show = okGeneral && okBarcode;
+
+                    tr.style.display = show ? '' : 'none';
+                    if (show) visible++;
+                });
+
+                if (lblInvTotal) lblInvTotal.textContent = '' + visible;
+            }
+
+            if (invSearch) invSearch.addEventListener('input', applyFilter);
+            if (invBarcode) invBarcode.addEventListener('input', applyFilter);
         })();
     </script>
 }

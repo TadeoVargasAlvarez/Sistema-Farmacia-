@@ -26,6 +26,30 @@
                 <span asp-validation-for="Nombre" class="text-danger small"></span>
             </div>
 
+            <div class="col-md-6">
+                <label asp-for="NombreGenerico" class="form-label form-label-sm">Nombre genérico</label>
+                <input asp-for="NombreGenerico" class="form-control form-control-sm" />
+                <span asp-validation-for="NombreGenerico" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="FormaFarmaceutica" class="form-label form-label-sm">Forma farmacéutica</label>
+                <input asp-for="FormaFarmaceutica" class="form-control form-control-sm" />
+                <span asp-validation-for="FormaFarmaceutica" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Concentracion" class="form-label form-label-sm">Concentración</label>
+                <input asp-for="Concentracion" class="form-control form-control-sm" />
+                <span asp-validation-for="Concentracion" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Presentacion" class="form-label form-label-sm">Presentación</label>
+                <input asp-for="Presentacion" class="form-control form-control-sm" />
+                <span asp-validation-for="Presentacion" class="text-danger small"></span>
+            </div>
+
             <div class="col-md-3">
                 <label asp-for="Precio" class="form-label form-label-sm"></label>
                 <input asp-for="Precio" class="form-control form-control-sm" />
@@ -34,7 +58,7 @@
 
             <div class="col-md-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <label class="form-label form-label-sm mb-0">Categoría</label>
+                    <label class="form-label form-label-sm mb-0">Acción terapéutica</label>
                     <a class="small" asp-area="Inventarios" asp-controller="Categorias" asp-action="Create">Nueva</a>
                 </div>
                 <select asp-for="CategoriaId" class="form-select form-select-sm" asp-items="ViewBag.Categorias">
@@ -43,7 +67,7 @@
             </div>
 
             <div class="col-md-3">
-                <label class="form-label form-label-sm">Marca</label>
+                <label class="form-label form-label-sm">Laboratorio</label>
                 <select asp-for="MarcaId" class="form-select form-select-sm" asp-items="ViewBag.Marcas">
                     <option value="">(Sin marca)</option>
                 </select>

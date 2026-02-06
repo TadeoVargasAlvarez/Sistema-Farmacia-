@@ -16,9 +16,13 @@
 
         <table class="table table-sm mb-2">
             <tr><th style="width:160px;">Código</th><td>@Model.Codigo</td></tr>
-            <tr><th>Producto</th><td>@Model.Nombre</td></tr>
-            <tr><th>Categoría</th><td>@(Model.Categoria?.Nombre ?? "-")</td></tr>
-            <tr><th>Marca</th><td>@(Model.Marca?.Nombre ?? "-")</td></tr>
+            <tr><th>Nombre comercial</th><td>@Model.Nombre</td></tr>
+            <tr><th>Nombre genérico</th><td>@(string.IsNullOrWhiteSpace(Model.NombreGenerico) ? "-" : Model.NombreGenerico)</td></tr>
+            <tr><th>Forma farmacéutica</th><td>@(string.IsNullOrWhiteSpace(Model.FormaFarmaceutica) ? "-" : Model.FormaFarmaceutica)</td></tr>
+            <tr><th>Concentración</th><td>@(string.IsNullOrWhiteSpace(Model.Concentracion) ? "-" : Model.Concentracion)</td></tr>
+            <tr><th>Presentación</th><td>@(string.IsNullOrWhiteSpace(Model.Presentacion) ? "-" : Model.Presentacion)</td></tr>
+            <tr><th>Acción terapéutica</th><td>@(Model.Categoria?.Nombre ?? "-")</td></tr>
+            <tr><th>Laboratorio</th><td>@(Model.Marca?.Nombre ?? "-")</td></tr>
         </table>
 
         <form asp-action="DeleteConfirmed" method="post" class="d-flex justify-content-end gap-2">

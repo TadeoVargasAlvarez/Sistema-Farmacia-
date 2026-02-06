@@ -25,14 +25,7 @@ public sealed class DbInitializerHostedService : BackgroundService
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
             timeoutCts.CancelAfter(TimeSpan.FromMinutes(2));
 
-            if (db.Database.IsMySql())
-            {
-                await db.Database.EnsureCreatedAsync(timeoutCts.Token);
-            }
-            else
-            {
-                await db.Database.MigrateAsync(timeoutCts.Token);
-            }
+            await db.Database.MigrateAsync(timeoutCts.Token);
 
             await DbSeeder.SeedAsync(db);
             _logger.LogInformation("Database initialized successfully");
