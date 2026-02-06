@@ -97,6 +97,7 @@
                                     <td>
                                         <div class="position-relative">
                                             <input type="text" class="form-control form-control-sm inp-prod-search mb-1" placeholder="Buscar producto o código…" autocomplete="off" />
+                                            <div class="position-absolute w-100 venta-ghost text-muted" style="top:0;left:0;right:0;pointer-events:none;padding:.25rem .5rem;font-size:.875rem;line-height:1.5;display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
                                             <div class="list-group position-absolute w-100 venta-suggest" style="top:100%;left:0;z-index:1050;display:none;max-height:220px;overflow:auto;"></div>
                                         </div>
                                         <select class="form-select form-select-sm sel-prod" name="Items[@i].ProductoId">
@@ -258,6 +259,52 @@
                 if (!box) return;
                 box.style.display = 'none';
                 box.innerHTML = '';
+            }
+
+            function setGhost(tr, query) {
+                if (!tr) return;
+                const ghost = tr.querySelector('.venta-ghost');
+                if (!ghost) return;
+
+                const qRaw = ('' + (query ?? '')).trim();
+                const q = normalizeSearch(qRaw);
+                if (!q) {
+                    ghost.style.display = 'none';
+                    ghost.innerHTML = '';
+                    return;
+                }
+
+                // Ghost solo para match por prefijo (mejor UX)
+                const match = productosCatalog.find(p => {
+                    const n = normalizeSearch(p.nombre);
+                    const c = normalizeSearch(p.codigo);
+                    return (n && n.startsWith(q)) || (c && c.startsWith(q));
+                });
+
+                if (!match) {
+                    ghost.style.display = 'none';
+                    ghost.innerHTML = '';
+                    return;
+                }
+
+                const suggestion = (match.nombre || match.codigo || '').trim();
+                if (!suggestion) {
+                    ghost.style.display = 'none';
+                    ghost.innerHTML = '';
+                    return;
+                }
+
+                // Si ya escribió todo, no mostrar ghost
+                if (normalizeSearch(suggestion) === q) {
+                    ghost.style.display = 'none';
+                    ghost.innerHTML = '';
+                    return;
+                }
+
+                // Render: parte escrita invisible + resto sugerido
+                const rest = suggestion.slice(qRaw.length);
+                ghost.innerHTML = `<span style="visibility:hidden;">${escapeHtmlText(qRaw)}</span><span>${escapeHtmlText(rest)}</span>`;
+                ghost.style.display = '';
             }
 
             function showSuggestions(tr, query) {
@@ -479,6 +526,7 @@
                     <td>
                         <div class="position-relative">
                             <input type="text" class="form-control form-control-sm inp-prod-search mb-1" placeholder="Buscar producto o código…" autocomplete="off" />
+                            <div class="position-absolute w-100 venta-ghost text-muted" style="top:0;left:0;right:0;pointer-events:none;padding:.25rem .5rem;font-size:.875rem;line-height:1.5;display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
                             <div class="list-group position-absolute w-100 venta-suggest" style="top:100%;left:0;z-index:1050;display:none;max-height:220px;overflow:auto;"></div>
                         </div>
                         <select class="form-select form-select-sm sel-prod" name="Items[${idx}].ProductoId">
@@ -760,6 +808,7 @@
                         const search = tr.querySelector('.inp-prod-search');
                         if (search) search.value = '';
                         hideSuggestions(tr);
+                        setGhost(tr, '');
                     }
                     recalcTotal();
                 }
@@ -773,6 +822,7 @@
                     if (!sel) return;
                     renderProductoOptions(sel, e.target.value || '');
                     showSuggestions(tr, e.target.value || '');
+                    setGhost(tr, e.target.value || '');
                     return;
                 }
             });
@@ -801,13 +851,57 @@
 
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    const ok = trySelectProductoFromSearch(tr, e.target.value || '');
-                    if (ok) hideSuggestions(tr);
+                    // Si no es match exacto, usar la primera sugerencia por prefijo
+                    const directOk = trySelectProductoFromSearch(tr, e.target.value || '');
+                    if (directOk) {
+                        hideSuggestions(tr);
+                        setGhost(tr, '');
+                        return;
+                    }
+
+                    const qRaw = ('' + (e.target.value || '')).trim();
+                    const q = normalizeSearch(qRaw);
+                    const match = productosCatalog.find(p => {
+                        const n = normalizeSearch(p.nombre);
+                        const c = normalizeSearch(p.codigo);
+                        return (n && n.startsWith(q)) || (c && c.startsWith(q));
+                    });
+                    if (match) {
+                        const suggestion = (match.nombre || match.codigo || '').trim();
+                        if (suggestion) {
+                            e.target.value = suggestion;
+                            trySelectProductoFromSearch(tr, suggestion);
+                            hideSuggestions(tr);
+                            setGhost(tr, '');
+                        }
+                    }
+                    return;
+                }
+
+                if (e.key === 'Tab' || e.key === 'ArrowRight') {
+                    const ghost = tr.querySelector('.venta-ghost');
+                    if (ghost && ghost.style.display !== 'none') {
+                        const qRaw = ('' + (e.target.value || '')).trim();
+                        const q = normalizeSearch(qRaw);
+                        const match = productosCatalog.find(p => {
+                            const n = normalizeSearch(p.nombre);
+                            const c = normalizeSearch(p.codigo);
+                            return (n && n.startsWith(q)) || (c && c.startsWith(q));
+                        });
+                        const suggestion = match ? (match.nombre || match.codigo || '').trim() : '';
+                        if (suggestion) {
+                            e.preventDefault();
+                            e.target.value = suggestion;
+                            setGhost(tr, '');
+                            showSuggestions(tr, suggestion);
+                        }
+                    }
                     return;
                 }
 
                 if (e.key === 'Escape') {
                     hideSuggestions(tr);
+                    setGhost(tr, '');
                     return;
                 }
             });
@@ -817,6 +911,7 @@
                 const tr = e.target.closest('tr.venta-row');
                 if (!tr) return;
                 showSuggestions(tr, e.target.value || '');
+                setGhost(tr, e.target.value || '');
             });
 
             body.addEventListener('focusout', function (e) {
@@ -824,6 +919,7 @@
                 const tr = e.target.closest('tr.venta-row');
                 if (!tr) return;
                 window.setTimeout(() => hideSuggestions(tr), 120);
+                window.setTimeout(() => setGhost(tr, ''), 120);
             });
             body.addEventListener('input', function (e) {
                 if (e.target.classList.contains('inp-cant') || e.target.classList.contains('inp-precio')) {
